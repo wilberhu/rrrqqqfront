@@ -145,7 +145,7 @@ export default {
       var chartGridTop = 50
       var chartGridHeight = 150
 
-      let series = [
+      const series = [
         this.makeGridData(0, 0, 'line', 'portfolio', chartData.portfolio),
         this.makeGridData(0, 0, 'line', 'benchmark_portfolio', chartData.benchmark_portfolio),
         this.makeGridData(1, 1, 'bar', 'daily_returns', chartData.daily_returns, {})
@@ -181,7 +181,7 @@ export default {
             color: '#333'
           },
           formatter: function(params) {
-            let params_index = []
+            const params_index = []
             if (chartData.params_index && params) {
               for (let i = 0; i < chartData.params_index.length; i++) {
                 for (let j = 0; j < params.length; j++) {

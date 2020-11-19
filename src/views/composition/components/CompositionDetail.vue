@@ -63,7 +63,7 @@
         </el-form-item>
         <el-form-item label="" label-width="120px" style="margin: 0" v-for="(company, company_index) in updateForm.companies" :key="company_index">
           <el-input :readonly="'readonly'" v-model="company.name" placeholder="请输入内容" style="width: 220px;"></el-input>
-          <el-button style="margin-top: 10px;" type="primary" plain @click="">Browser</el-button>
+          <el-button style="margin-top: 10px;" type="primary" plain @click="tempFunction()">Browser</el-button>
           <el-input :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 220px;"></el-input>
           <el-button
             type="text"
@@ -82,7 +82,7 @@
           <el-input :readonly="'readonly'" v-model="idleFunds" placeholder="请输入内容" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label="" label-width="120px" style="margin: 0px">
-          <el-button style="margin-top: 10px;" type="primary" plain @click="">Add</el-button>
+          <el-button style="margin-top: 10px;" type="primary" plain @click="tempFunction()">Add</el-button>
         </el-form-item>
         <el-form-item label-width="120px">
           <span class="dialog-footer">
@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { fetchItem, fetchHighlight, createItem, updateItem } from '@/api/strategy'
+// import { fetchItem, fetchHighlight, createItem, updateItem } from '@/api/strategy'
 import { fetchList } from '@/api/datasets'
 // import Pagination from '@/components/Pagination'
 import LineChart from './LineChart'
@@ -258,6 +258,9 @@ export default {
       //   console.log('message======================', message)
       //   this.$message.error('delete error')
       // })
+    },
+    tempFunction() {
+
     }
   }
 }

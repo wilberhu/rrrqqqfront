@@ -43,8 +43,8 @@ export default {
       type: Object,
       default: function() {
         return {
-          companyCode: null,
-          companyName: null,
+          ts_code: null,
+          name: null,
           histData: null,
           maData: null
         }
@@ -103,7 +103,7 @@ export default {
       this.chart.setOption({
 
         title: {
-          text: this.form.companyName + ' ' + this.form.companyCode,
+          text: this.form.name + ' ' + this.form.ts_code,
           left: 0
         },
         tooltip: {

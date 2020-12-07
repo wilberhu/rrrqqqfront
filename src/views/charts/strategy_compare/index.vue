@@ -22,7 +22,7 @@
           v-model="inputValue"
           class="input-new-tag"
           size="small"
-          @keyup.enter.native="handleInputConfirm"
+          @keyup.enter.native="$event.target.blur"
           @blur="handleInputConfirm"
         />
         <el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>

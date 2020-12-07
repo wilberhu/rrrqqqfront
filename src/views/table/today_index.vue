@@ -1,11 +1,11 @@
 <template>
   <div>
     <div class="filter-container">
-      <el-input :placeholder="$t('table.title')" v-model="listQuery.title" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"/>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
-        <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key"/>
-      </el-select>
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">{{ $t('table.search') }}</el-button>
+      <el-input placeholder="ts_code" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch"/>
+      <!-- <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleSearch">
+        <el-option v-for="item in orderingOptions" :key="item.key" :label="item.label" :value="item.key"/>
+      </el-select> -->
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">{{ $t('table.search') }}</el-button>
     </div>
     <el-table
       v-loading="listLoading"
@@ -79,10 +79,10 @@
       <el-table-column sortable prop="pct_chg" :label="$t('table.today_index.pct_chg')">
         <template slot-scope="scope">
           <template v-if="scope.row.pct_chg > 0">
-            <span style="color: red">{{ scope.row.pct_chg | numFilter }} ↑</span>
+            <span style="color: red">{{ scope.row.pct_chg | numFilter }}% ↑</span>
           </template>
           <template v-else-if="scope.row.pct_chg < 0">
-            <span style="color: green">{{ scope.row.pct_chg | numFilter }} ↓</span>
+            <span style="color: green">{{ scope.row.pct_chg | numFilter }}% ↓</span>
           </template>
           <template v-else>
             <span>{{ scope.row.change | numFilter }}</span>
@@ -102,7 +102,7 @@
       </el-table-column>
       <el-table-column prop="hist_data" :label="$t('table.hist_data')">
         <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row.ts_code)">{{ $t('table.hist_data') }}</el-button>
+          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -146,12 +146,10 @@ export default {
       listQuery: {
         limit: 20,
         offset: undefined,
-        importance: undefined,
-        title: undefined,
-        type: undefined,
-        sort: 'ts_code'
+        ordering: undefined,
+        search: undefined
       },
-      sortOptions: [{ label: 'TsCode Ascending', key: 'ts_code' },
+      orderingOptions: [{ label: 'TsCode Ascending', key: 'ts_code' },
         { label: 'TsCode Descending', key: '-ts_code' },
         { label: 'Name Ascending', key: 'name' },
         { label: 'Name Descending', key: '-name' }],
@@ -178,11 +176,12 @@ export default {
     this.getList()
   },
   methods: {
-    drawLine(code) {
+    drawLine(item) {
       this.$router.push({
         name: 'LineChart',
         params: {
-          code: code
+          ts_code: item.ts_code,
+          name: item.name
         }
       })
     },
@@ -200,7 +199,7 @@ export default {
         }, 1.5 * 1000)
       })
     },
-    handleFilter() {
+    handleSearch() {
       this.page = 1
       this.getList()
     },
@@ -210,20 +209,20 @@ export default {
     },
     sortByColumn(prop, order) {
       if (order === 'ascending') {
-        this.listQuery.sort = prop
+        this.listQuery.ordering = prop
       } else if (order === 'descending') {
-        this.listQuery.sort = '-' + prop
+        this.listQuery.ordering = '-' + prop
       } else {
-        this.listQuery.sort = undefined
+        this.listQuery.ordering = undefined
       }
-      this.handleFilter()
+      this.handleSearch()
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows
       this.$emit('index_multiple_selection', this.multipleSelection)
     },
     getSortClass: function(key) {
-      const sort = this.listQuery.sort
+      const sort = this.listQuery.ordering
       return sort === `${key}`
         ? 'ascending'
         : sort === `-${key}`

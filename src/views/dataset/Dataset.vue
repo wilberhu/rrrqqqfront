@@ -409,7 +409,7 @@
           this.$message.error('upload error')
         })
       },
-      handleFilter() {
+      handleSearch() {
         this.page = 1
         this.getList()
       },
@@ -423,7 +423,7 @@
         } else {
           this.listQuery.sort = '-' + prop
         }
-        this.handleFilter()
+        this.handleSearch()
       }
     }
   }

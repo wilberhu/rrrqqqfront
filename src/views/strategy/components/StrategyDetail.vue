@@ -346,7 +346,7 @@ export default {
         }, 1.5 * 1000)
       })
     },
-    handleFilter() {
+    handleSearch() {
       this.page = 1
       this.getList()
     },
@@ -360,7 +360,7 @@ export default {
       } else {
         this.listQuery.sort = '-' + prop
       }
-      this.handleFilter()
+      this.handleSearch()
     }
   }
 }

@@ -1,23 +1,21 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="select_word" placeholder="key word (username, firstname, lastname)" class="handle-input mr10" />
-      <el-button type="primary" icon="el-icon-search" @click="search">Search</el-button>
-      <el-button
-        type="primary"
-        icon="el-icon-plus"
-        @click="handleImport()"
-      >Create</el-button>
+      <el-input placeholder="username, email, firstname, lastname" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch" />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">{{ $t('table.search') }}</el-button>
+      <el-button type="primary" icon="el-icon-plus" class="filter-item" @click="handleImport()">Create</el-button>
     </div>
     <el-table
+      v-loading="listLoading"
       ref="multipleTable"
-      :data="data"
-      :default-sort="{prop: 'created', order: 'descending'}"
+      :key="tableKey"
+      :data="list"
+      row-key="id"
       border
-      class="table"
-      @selection-change="handleSelectionChange"
+      fit
+      highlight-current-row
       @sort-change="sortChange"
-    >
+      @selection-change="handleSelectionChange">
       <el-table-column prop="id" label="id" width="70" sortable="custom" />
       <el-table-column prop="username" label="username" sortable="custom" />
       <el-table-column prop="email" label="email" sortable="custom" />
@@ -149,17 +147,19 @@
 
 <script>
 import { fetchItemList, createItem, updateItem, deleteItem, updateToken } from '@/api/user'
+import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination'
 
 export default {
   name: 'User',
   components: { Pagination },
+  directives: { waves },
   data() {
     return {
+      tableKey: 0,
       list: [],
       total: 0,
       multipleSelection: [],
-      select_word: '',
       del_list: [],
       is_search: false,
       tokenVisible: false,
@@ -173,7 +173,8 @@ export default {
       listQuery: {
         limit: 20,
         offset: undefined,
-        sort: undefined
+        ordering: undefined,
+        search: undefined
       },
       createForm: {
         username: undefined,
@@ -202,26 +203,26 @@ export default {
     }
   },
   computed: {
-    data() {
-      return this.list.filter(d => {
-        let is_del = false
-        for (let i = 0; i < this.del_list.length; i++) {
-          if (d.username === this.del_list[i].username) {
-            is_del = true
-            break
-          }
-        }
-        if (!is_del) {
-          if (
-            d.username.indexOf(this.select_word) > -1 ||
-            d.first_name.indexOf(this.select_word) > -1 ||
-            d.last_name.indexOf(this.select_word) > -1
-          ) {
-            return d
-          }
-        }
-      })
-    },
+    // data() {
+    //   return this.list.filter(d => {
+    //     let is_del = false
+    //     for (let i = 0; i < this.del_list.length; i++) {
+    //       if (d.username === this.del_list[i].username) {
+    //         is_del = true
+    //         break
+    //       }
+    //     }
+    //     if (!is_del) {
+    //       if (
+    //         d.username.indexOf(this.select_word) > -1 ||
+    //         d.first_name.indexOf(this.select_word) > -1 ||
+    //         d.last_name.indexOf(this.select_word) > -1
+    //       ) {
+    //         return d
+    //       }
+    //     }
+    //   })
+    // },
     offset: function() {
       return (this.page - 1) * this.listQuery.limit
     }
@@ -365,7 +366,7 @@ export default {
         this.$message.error('Create error')
       })
     },
-    handleFilter() {
+    handleSearch() {
       this.page = 1
       this.getList()
     },
@@ -375,23 +376,14 @@ export default {
     },
     sortByColumn(prop, order) {
       if (order === 'ascending') {
-        this.listQuery.sort = prop
+        this.listQuery.ordering = prop
+      } else if (order === 'descending') {
+        this.listQuery.ordering = '-' + prop
       } else {
-        this.listQuery.sort = '-' + prop
+        this.listQuery.ordering = undefined
       }
-      this.handleFilter()
+      this.handleSearch()
     }
   }
 }
 </script>
-
-<style scoped>
-.handle-input {
-  width: 300px;
-  display: inline-block;
-}
-.del-dialog-cnt {
-  font-size: 16px;
-  text-align: center;
-}
-</style>

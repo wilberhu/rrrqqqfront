@@ -14,9 +14,9 @@ export default {
       type: Object,
       default: function() {
         return {
-          companyCode: [],
-          companyName: [],
-          type: [],
+          ts_code_list: [],
+          name_list: [],
+          type_list: [],
           timeLine: [],
           closeData: []
         }
@@ -42,11 +42,11 @@ export default {
   computed: {
     series() {
       var ret = []
-      for (var i = 0; i < this.form.companyCode.length; i++) {
+      for (var i = 0; i < this.form.ts_code_list.length; i++) {
         ret.push({
-          name: this.form.companyName[i],
+          name: this.form.name_list[i],
           type: 'line',
-          yAxisIndex: this.form.type[i],
+          yAxisIndex: this.form.type_list[i],
           animation: false,
           lineStyle: {
             width: 1
@@ -105,7 +105,7 @@ export default {
           }
         },
         legend: {
-          data: this.form.companyName,
+          data: this.form.name_list,
           x: 'left'
         },
         dataZoom: [

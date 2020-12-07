@@ -8,9 +8,16 @@ export function fetchCompanyList(params) {
   })
 }
 
-export function fetchAllCompaniesMarkets() {
+export function fetchAllCompanies() {
   return request({
-    url: '/api/companies_markets/all/',
+    url: '/api/companies/all/',
+    method: 'get'
+  })
+}
+
+export function fetchAllMarkets() {
+  return request({
+    url: '/api/markets/all/',
     method: 'get'
   })
 }
@@ -19,14 +26,6 @@ export function fetchCompanyDetail(id) {
   return request({
     url: '/api/companies/' + id + '/',
     method: 'get'
-  })
-}
-
-export function fetchItemDetail(params) {
-  return request({
-    url: '/api/item_detail/',
-    method: 'get',
-    params
   })
 }
 

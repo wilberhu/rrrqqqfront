@@ -37,6 +37,7 @@ service.interceptors.response.use(
     const res = response.data
     const status = response.status
     if (status === 401 || status === 403) {
+      console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
       Message({
         message: res.message,
         type: 'error',
@@ -55,7 +56,7 @@ service.interceptors.response.use(
           type: 'warning'
         }).then(() => {
           store.dispatch('user/resetToken').then(() => {
-            // location.reload()
+            location.reload()
           })
         })
       }
@@ -68,7 +69,7 @@ service.interceptors.response.use(
     console.log('err' + error) // for debug
     const res = error.response.data
     const status = error.response.status
-    if (status === 401) {
+    if (status === 401 || status === 403) {
       Message({
         // message: error.detail,
         message: res.detail,
@@ -76,7 +77,7 @@ service.interceptors.response.use(
         duration: 5 * 1000
       }).then(
         store.dispatch('user/resetToken').then(() => {
-          // location.reload()
+          location.reload()
         })
       )
     }

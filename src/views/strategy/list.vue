@@ -177,7 +177,7 @@ export default {
       this.listQuery.limit = val
       this.getList()
     },
-    handleFilter() {
+    handleSearch() {
       this.page = 1
       this.getList()
     },
@@ -196,7 +196,7 @@ export default {
       } else {
         this.listQuery.sort = undefined
       }
-      this.handleFilter()
+      this.handleSearch()
     },
     handleDelete(index, row) {
       this.index = index

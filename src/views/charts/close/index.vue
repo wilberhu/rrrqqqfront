@@ -7,19 +7,6 @@
         </div>
       </el-form-item>
       <el-form-item label="">
-        <!--<el-select
-          v-model="select_codes"
-          multiple
-          filterable
-          allow-create
-          default-first-option
-          placeholder="Select Companies">
-          <el-option
-            v-for="item in codes_option"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"/>
-        </el-select>-->
         <el-tag
           v-for="tag in dynamicTags"
           :key="tag.ts_code"
@@ -29,15 +16,16 @@
         >
           {{ tag.ts_code }} {{ tag.name }}
         </el-tag>
-        <el-input
+        <el-autocomplete
           v-if="inputVisible"
           ref="saveTagInput"
           v-model="inputValue"
-          class="input-new-tag"
+          :fetch-suggestions="querySearchAsync"
+          placeholder="请输入内容"
           size="small"
-          @keyup.enter.native="handleInputConfirm"
-          @blur="handleInputConfirm"
-        />
+          style="width: 180px;"
+          @select="handleSelect($event)"
+        ></el-autocomplete>
         <el-button v-else size="mini" @click="showInput">+ New Tag</el-button>
 
         <el-button type="primary" size="mini" @click="drawCharts">submit</el-button>
@@ -50,7 +38,7 @@
 <script>
 import Chart from '@/components/Charts/closeMarker'
 import { fetchCompanyClose } from '@/api/histData'
-import { fetchItemDetail } from '@/api/basic'
+import { fetchAllCompanies } from '@/api/basic'
 import { Message } from 'element-ui'
 
 export default {
@@ -58,11 +46,13 @@ export default {
   components: { Chart },
   data() {
     return {
+      listLoading: true,
+      companies: [],
       show: false,
       form: {
-        companyCode: [],
-        companyName: [],
-        type: [],
+        ts_code_list: [],
+        name_list: [],
+        type_list: [],
         timeLine: [],
         closeData: []
       },
@@ -73,7 +63,11 @@ export default {
       inputValue: ''
     }
   },
+  mounted() {
+    this.getAllCompanies()
+  },
   activated() {
+    this.getAllCompanies()
     if (this.$route.params.codes) {
       this.show = true
       this.dynamicTags = []
@@ -87,7 +81,6 @@ export default {
     } else {
       this.show = false
     }
-    // this.getCompaniesMarkets()
   },
   methods: {
     drawCharts() {
@@ -96,9 +89,9 @@ export default {
         ts_code += this.dynamicTags[i].ts_code + ' '
       }
       fetchCompanyClose(ts_code).then(response => {
-        this.form.companyCode = response.company_code
-        this.form.companyName = response.company_name
-        this.form.type = response.type
+        this.form.ts_code_list = response.ts_code_list
+        this.form.name_list = response.name_list
+        this.form.type_list = response.type_list
         this.form.timeLine = response.time_line
         this.form.closeData = response.close_data
         this.$refs.Chart.draw()
@@ -107,76 +100,80 @@ export default {
     prev() {
       this.$router.go(-1)
     },
-    /*
-    getCompaniesMarkets() {
-      this.listLoading = true
-      fetchAllCompaniesMarkets().then(response => {
-        this.listLoading = false
-        this.codes_option = []
-        for (var i = 0; i < response.results.length; i++) {
-          this.codes_option.push({
-            key: response.results[i].code,
-            value: response.results[i].code + ' ' + response.results[i].name
-          })
-        }
-
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-    */
     handleClose(tag) {
       this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
     },
-
     showInput() {
       this.inputVisible = true
       this.$nextTick(_ => {
         this.$refs.saveTagInput.$refs.input.focus()
       })
     },
-
-    handleInputConfirm() {
+    querySearchAsync(queryString, cb) {
+      var companies = this.companies
+      var results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies
+      clearTimeout(this.timeout)
+      this.timeout = setTimeout(() => {
+        cb(results)
+      }, 0)
+    },
+    createContainsFilter(queryString) {
+      return (company) => {
+        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
+      }
+    },
+    handleSelect(item) {
       const inputValue = this.inputValue
       this.listLoading = true
-      fetchItemDetail({ pk: inputValue }).then(result => {
-        this.listLoading = false
-        if (inputValue) {
-          if (this.dynamicTags.length >= 10) {
+      if (inputValue) {
+        for (var i = 0; i < this.dynamicTags.length; i++) {
+          if (this.dynamicTags[i].ts_code === item.ts_code) {
             Message({
               // message: error.message,
-              message: 'The companies should be less than 10',
+              message: 'tag重复，请重新输入',
               type: 'error',
               duration: 5 * 1000
             })
             return
           }
-          for (var i = 0; i < this.dynamicTags.length; i++) {
-            if (this.dynamicTags[i].ts_code === result.ts_code) {
-              Message({
-                // message: error.message,
-                message: 'tag重复，请重新输入',
-                type: 'error',
-                duration: 5 * 1000
-              })
-              return
-            }
-          }
-          console.log(result)
-          this.dynamicTags.push({
-            'ts_code': result.ts_code,
-            'name': result.name
-          })
         }
+        this.dynamicTags.push({
+          'ts_code': item.ts_code,
+          'name': item.name
+        })
+        this.form.ts_code_list.push(item.ts_code)
+        this.form.name_list.push(item.name)
         this.inputVisible = false
         this.inputValue = ''
-      }).catch(err => {
-        Message({
-          message: err.message,
-          type: 'error',
-          duration: 5 * 1000
-        })
+      }
+    },
+    handleBlur() {
+      const inputValue = this.inputValue
+      var companies = this.companies
+      if (inputValue) {
+        var results = inputValue ? companies.filter(this.createContainsFilter(inputValue)) : companies
+        if (results.length === 1) {
+          this.handleSelect(results[0])
+        } else {
+          this.inputValue = ''
+        }
+      }
+    },
+    getAllCompanies() {
+      this.listLoading = true
+      fetchAllCompanies().then(response => {
+        this.listLoading = false
+        this.companies = []
+        for (const item of response) {
+          this.companies.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
       })
     }
   }

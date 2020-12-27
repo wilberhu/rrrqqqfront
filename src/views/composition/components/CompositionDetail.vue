@@ -150,17 +150,6 @@ export default {
     }
   },
   data() {
-    const validateRequire = (rule, value, callback) => {
-      if (value === '') {
-        this.$message({
-          message: rule.field + '为必传项',
-          type: 'error'
-        })
-        callback(new Error(rule.field + '为必传项'))
-      } else {
-        callback()
-      }
-    }
     return {
       companies: [],
       tmpCompany: '',
@@ -202,7 +191,7 @@ export default {
         name: [
           { required: true, message: '请输入组合名称', trigger: 'blur' },
           { min: 4, max: 30, message: '长度在 4 到 30 个字符', trigger: 'blur' }
-        ],
+        ]
       },
       tempRoute: {}
     }
@@ -303,9 +292,9 @@ export default {
         }
       }
       if (this.isTimestampEdit) {
-        //////////////////////
+        // ///////////////////
         // edit an activity //
-        //////////////////////
+        // ///////////////////
         for (let i = 0; i < this.compositionForm.activities.length; i++) {
           if (this.activityForm.timestamp === this.compositionForm.activities[i].timestamp) {
             this.compositionForm.activities.splice(i, 1, this.activityForm)
@@ -327,9 +316,9 @@ export default {
             this.updateState()
             return
           } else {
-            /////////////////////
+            // //////////////////
             // add an activity //
-            /////////////////////
+            // //////////////////
             this.compositionForm.activities.splice(i, 0, this.activityForm)
             this.editVisible = false
 
@@ -351,9 +340,9 @@ export default {
             return
           }
         }
-        /////////////////////
+        // //////////////////
         // add an activity //
-        /////////////////////
+        // //////////////////
         this.compositionForm.activities.splice(this.compositionForm.activities.length, 0, this.activityForm)
         this.editVisible = false
         this.updateState()
@@ -506,48 +495,50 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           if (this.isEdit) {
-            updateItem(this.compositionForm.id, this.compositionForm).then(
-              response => {
-                this.compositionForm = Object.assign({}, response)
-                this.$message({
-                  message: 'Successful saved composition',
-                  type: 'Success'
-                })
-                this.saveCompositionVisible = false
-              }
-            )
-            .catch(
-              error => {
-                this.$message({
-                  showClose: true,
-                  message: error,
-                  type: 'Error'
-                })
-              }
-            )
+            updateItem(this.compositionForm.id, this.compositionForm)
+              .then(
+                response => {
+                  this.compositionForm = Object.assign({}, response)
+                  this.$message({
+                    message: 'Successful saved composition',
+                    type: 'Success'
+                  })
+                  this.saveCompositionVisible = false
+                }
+              )
+              .catch(
+                error => {
+                  this.$message({
+                    showClose: true,
+                    message: error,
+                    type: 'Error'
+                  })
+                }
+              )
           } else {
-            createItem(this.compositionForm).then(
-              response => {
-                this.compositionForm = Object.assign({}, response)
-                this.$message({
-                  message: 'Successful saved composition',
-                  type: 'Success'
-                })
-                this.saveCompositionVisible = false
-                this.$router.push({
-                  path: '/composition/edit/'+this.compositionForm.id
-                })
-              }
-            )
-            .catch(
-              error => {
-                this.$message({
-                  showClose: true,
-                  message: error,
-                  type: 'Error'
-                })
-              }
-            )
+            createItem(this.compositionForm)
+              .then(
+                response => {
+                  this.compositionForm = Object.assign({}, response)
+                  this.$message({
+                    message: 'Successful saved composition',
+                    type: 'Success'
+                  })
+                  this.saveCompositionVisible = false
+                  this.$router.push({
+                    path: '/composition/edit/' + this.compositionForm.id
+                  })
+                }
+              )
+              .catch(
+                error => {
+                  this.$message({
+                    showClose: true,
+                    message: error,
+                    type: 'Error'
+                  })
+                }
+              )
           }
         }
       })

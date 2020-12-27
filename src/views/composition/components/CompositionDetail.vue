@@ -36,8 +36,8 @@
             :loading="loading"
             class="code-button-item"
             type="primary"
-            @click.native.prevent="submit"
-          >Submit</el-button>
+            @click.native.prevent="saveCompositionVisible=true"
+          >Save Composition</el-button>
         </el-col>
         <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
           <el-row>
@@ -46,51 +46,52 @@
         </el-col>
       </el-row>
     </el-form>
+
     <!-- 编辑弹出框 -->
     <el-dialog :visible.sync="editVisible" :title="isTimestampEdit ? 'Edit' : 'Add'" width="80vw" center>
-      <el-form ref="compositionForm" :model="updateForm">
+      <el-form ref="compositionForm" :model="activityForm">
         <el-form-item label="资金总额" label-width="120px">
-          <el-input :readonly="'readonly'" v-model="updateForm.stock" placeholder="请输入内容" style="width: 220px;"></el-input>
+          <el-input :readonly="'readonly'" v-model="activityForm.stock" placeholder="请输入内容" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label="日期" label-width="120px">
           <el-date-picker
             :picker-options="datePickerOptions"
             :readonly="isTimestampEdit?'readonly':false"
-            v-model="updateForm.timestamp"
+            v-model="activityForm.timestamp"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
             type="date"
             aria-required="true"
             placeholder="选择日期"
-            @blur="computeFund($event, updateForm, null)"
+            @blur="computeFund($event, activityForm, null)"
           >
           </el-date-picker>
         </el-form-item>
         <el-form-item label="股票份额" label-width="120px">
-          <el-form-item style="margin: 5px 0" v-for="(company, company_index) in updateForm.companies" :key="company_index">
+          <el-form-item style="margin: 5px 0" v-for="(company, company_index) in activityForm.companies" :key="company_index">
             <el-autocomplete
-              v-model="updateForm.companies[company_index].ts_code_name"
+              v-model="activityForm.companies[company_index].ts_code_name"
               :fetch-suggestions="querySearchAsync"
               placeholder="请输入内容"
               style="width: 220px;"
               @select="handleSelect($event, company_index)"
             ></el-autocomplete>
             <span style="margin-left: 20px;">股数：</span>
-            <el-input type="number" min="0" :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 100px;" @input="computeFund($event, updateForm, company_index)"></el-input>
-            <span style="margin-left: 20px;">股价：{{ updateForm.companies[company_index].close || '' }}</span>
-            <span style="margin-left: 20px;">资金：{{ updateForm.companies[company_index].allfund || '' }}</span>
+            <el-input type="number" min="0" :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 100px;" @input="computeFund($event, activityForm, company_index)"></el-input>
+            <span style="margin-left: 20px;">股价：{{ activityForm.companies[company_index].close || '' }}</span>
+            <span style="margin-left: 20px;">资金：{{ activityForm.companies[company_index].allfund || '' }}</span>
             <el-button
               type="text"
               icon="el-icon-delete"
               style="margin-left: 20px;"
-              @click="deleteCompany(($event, company_index))"
+              @click="deleteCompany($event, company_index)"
             >remove
             </el-button>
           </el-form-item>
           <el-button style="margin-top: 10px;" type="primary" plain @click="addCompany()">Add</el-button>
         </el-form-item>
         <el-form-item label="空闲资金" label-width="120px" style="margin: 10px 0 0 0;">
-          <el-input :readonly="'readonly'" v-model="updateForm.freecash" style="width: 220px;"></el-input>
+          <el-input v-model="activityForm.freecash" :readonly="'readonly'" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label-width="120px">
           <span class="dialog-footer">
@@ -104,9 +105,27 @@
     <el-dialog :visible.sync="delVisible" title="Delete" width="300px" center>
       <div class="del-dialog-cnt">Are you confirm to remove the data?</div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="delVisible = false">Cancle</el-button>
         <el-button type="primary" @click="confirmDestroyTimestamp">OK</el-button>
+        <el-button @click="delVisible = false">Cancel</el-button>
       </span>
+    </el-dialog>
+
+    <!-- 保存弹出框 -->
+    <el-dialog :visible.sync="saveCompositionVisible" :title="isEdit ? 'Edit' : 'Add'" width="80vw" center>
+      <el-form ref="compositionForm" :model="compositionForm" :rules="rules">
+        <el-form-item label="组合名称" label-width="120px" prop="name">
+          <el-input v-model="compositionForm.name" placeholder="请输入名称" style="width: 220px;"></el-input>
+        </el-form-item>
+        <el-form-item label="组合介绍" label-width="120px">
+          <el-input v-model="compositionForm.description" placeholder="请输入介绍" style="width: 220px;"></el-input>
+        </el-form-item>
+        <el-form-item label-width="120px">
+          <span class="dialog-footer">
+            <el-button style="margin-top: 10px;" size="small" type="primary" @click="saveComposition('compositionForm')">Submit</el-button>
+            <el-button size="small" @click="saveCompositionVisible=false">Cancel</el-button>
+          </span>
+        </el-form-item>
+      </el-form>
     </el-dialog>
   </div>
 </template>
@@ -115,7 +134,7 @@
 // import { fetchItem, fetchHighlight, createItem, updateItem } from '@/api/strategy'
 import { fetchAllCompanies } from '@/api/basic'
 import { getHistData, fetchCompanyClose } from '@/api/histData'
-import { dailyTrader } from '@/api/composition'
+import { dailyTrader, fetchItem, createItem, updateItem } from '@/api/composition'
 // import Pagination from '@/components/Pagination'
 import LineChart from './LineChart'
 
@@ -131,21 +150,35 @@ export default {
     }
   },
   data() {
+    const validateRequire = (rule, value, callback) => {
+      if (value === '') {
+        this.$message({
+          message: rule.field + '为必传项',
+          type: 'error'
+        })
+        callback(new Error(rule.field + '为必传项'))
+      } else {
+        callback()
+      }
+    }
     return {
       companies: [],
       tmpCompany: '',
       compositionForm: {
+        id: undefined,
+        name: undefined,
+        description: undefined,
         stock: 100000,
         activities: []
       },
-      updateForm: {
+      activityForm: {
         companies: [],
         timestamp: undefined,
         stock: undefined,
         freecash: undefined,
         allfund: undefined
       },
-      deleteForm: {
+      deleteTimestampForm: {
         index: undefined
       },
       loading: false,
@@ -159,24 +192,55 @@ export default {
       editVisible: false,
       isTimestampEdit: false,
       delVisible: false,
+      saveCompositionVisible: false,
       datePickerOptions: {
         disabledDate(date) {
           return date > new Date() || date < Date.parse('2000-01-01') || date.getDay() === 0 || date.getDay() === 6
         }
-      }
+      },
+      rules: {
+        name: [
+          { required: true, message: '请输入组合名称', trigger: 'blur' },
+          { min: 4, max: 30, message: '长度在 4 到 30 个字符', trigger: 'blur' }
+        ],
+      },
+      tempRoute: {}
     }
   },
   mounted() {
+  },
+  created() {
+    if (this.isEdit) {
+      this.compositionForm.id = this.$route.params && this.$route.params.id
+      this.fetchData(this.compositionForm.id)
+    } else {
+      this.updateState()
+    }
+
     this.getAllCompanies()
-    this.updateState()
+
+    // Why need to make a copy of this.$route here?
+    // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
+    // https://github.com/PanJiaChen/vue-element-admin/issues/1221
+    this.tempRoute = Object.assign({}, this.$route)
   },
   methods: {
+    fetchData(id) {
+      fetchItem(id)
+        .then(response => {
+          // set tagsview title
+          this.setTagsViewTitle()
+          // set page title
+          this.setPageTitle()
+          this.compositionForm = Object.assign({}, response)
+          this.updateState()
+        })
+    },
     submit() {
-      console.log(this.compositionForm)
       this.updateState()
     },
     addTimestamp() {
-      this.updateForm = {
+      this.activityForm = {
         companies: [],
         timestamp: undefined,
         stock: undefined,
@@ -187,13 +251,13 @@ export default {
       this.isTimestampEdit = false
     },
     editTimestamp(index) {
-      this.updateForm = Object.assign({}, this.compositionForm.activities[index])
+      this.activityForm = Object.assign({}, this.compositionForm.activities[index])
       this.editVisible = true
       this.isTimestampEdit = true
-      this.computeFund(null, this.updateForm, null)
+      this.computeFund(null, this.activityForm, null)
     },
     submitTimestamp() {
-      if(this.updateForm.timestamp == null || this.updateForm.timestamp === '') {
+      if (this.activityForm.timestamp == null || this.activityForm.timestamp === '') {
         this.$message({
           showClose: true,
           message: 'Timestamp cannot be null',
@@ -201,7 +265,7 @@ export default {
         })
         return
       }
-      if (isNaN(this.updateForm.freecash) || this.updateForm.freecash < 0) {
+      if (isNaN(this.activityForm.freecash) || this.activityForm.freecash < 0) {
         this.$message({
           showClose: true,
           message: 'Free stock less than 0',
@@ -210,7 +274,7 @@ export default {
         return
       }
       const companyList = []
-      for (const item of this.updateForm.companies) {
+      for (const item of this.activityForm.companies) {
         if (!item.ts_code || item.ts_code === '') {
           this.$message({
             showClose: true,
@@ -239,9 +303,12 @@ export default {
         }
       }
       if (this.isTimestampEdit) {
+        //////////////////////
+        // edit an activity //
+        //////////////////////
         for (let i = 0; i < this.compositionForm.activities.length; i++) {
-          if (this.updateForm.timestamp === this.compositionForm.activities[i].timestamp) {
-            this.compositionForm.activities.splice(i, 1, this.updateForm)
+          if (this.activityForm.timestamp === this.compositionForm.activities[i].timestamp) {
+            this.compositionForm.activities.splice(i, 1, this.activityForm)
             this.editVisible = false
             this.updateState()
             return
@@ -249,9 +316,9 @@ export default {
         }
       } else {
         for (let i = 0; i < this.compositionForm.activities.length; i++) {
-          if (this.updateForm.timestamp > this.compositionForm.activities[i].timestamp) {
+          if (this.activityForm.timestamp > this.compositionForm.activities[i].timestamp) {
             continue
-          } else if (this.updateForm.timestamp === this.compositionForm.activities[i].timestamp) {
+          } else if (this.activityForm.timestamp === this.compositionForm.activities[i].timestamp) {
             this.$message({
               showClose: true,
               message: 'Timestamp duplicated',
@@ -260,8 +327,12 @@ export default {
             this.updateState()
             return
           } else {
-            this.compositionForm.activities.splice(i, 0, this.updateForm)
+            /////////////////////
+            // add an activity //
+            /////////////////////
+            this.compositionForm.activities.splice(i, 0, this.activityForm)
             this.editVisible = false
+
             // check the later date freecash >= 0
             for (let j = i; j < this.compositionForm.activities.length; j++) {
               this.computeFund(null, this.compositionForm.activities[j], null)
@@ -275,26 +346,30 @@ export default {
               }
             }
             // check end
+
             this.updateState()
             return
           }
         }
-        this.compositionForm.activities.splice(this.compositionForm.activities.length, 0, this.updateForm)
+        /////////////////////
+        // add an activity //
+        /////////////////////
+        this.compositionForm.activities.splice(this.compositionForm.activities.length, 0, this.activityForm)
         this.editVisible = false
         this.updateState()
       }
     },
     destroyTimestamp(index) {
-      this.deleteForm.index = index
+      this.deleteTimestampForm.index = index
       this.delVisible = true
     },
     confirmDestroyTimestamp() {
-      this.compositionForm.activities.splice(this.deleteForm.index, 1)
+      this.compositionForm.activities.splice(this.deleteTimestampForm.index, 1)
       this.delVisible = false
       this.updateState()
     },
     addCompany(item) {
-      this.updateForm.companies.push({
+      this.activityForm.companies.push({
         ts_code_name: '',
         name: '',
         ts_code: '',
@@ -302,7 +377,7 @@ export default {
       })
     },
     deleteCompany(item, company_index) {
-      this.updateForm.companies.splice(company_index, 1)
+      this.activityForm.companies.splice(company_index, 1)
     },
     querySearchAsync(queryString, cb) {
       var companies = this.companies
@@ -318,62 +393,62 @@ export default {
       }
     },
     handleSelect(event, company_index) {
-      this.updateForm.companies[company_index].ts_code = event.ts_code
-      this.updateForm.companies[company_index].name = event.name
-      this.updateForm.companies[company_index].ts_code_name = event.value
-      if(this.updateForm.timestamp == null || this.updateForm.timestamp === '') {
+      this.activityForm.companies[company_index].ts_code = event.ts_code
+      this.activityForm.companies[company_index].name = event.name
+      this.activityForm.companies[company_index].ts_code_name = event.value
+      if (this.activityForm.timestamp == null || this.activityForm.timestamp === '') {
         return
       }
       const queryParams = {
-        date__lte: this.updateForm.timestamp,
-        date__gte: this.updateForm.timestamp
+        date__lte: this.activityForm.timestamp,
+        date__gte: this.activityForm.timestamp
       }
-      getHistData(this.updateForm.companies[company_index].ts_code, queryParams).then(response => {
+      getHistData(this.activityForm.companies[company_index].ts_code, queryParams).then(response => {
         if (response.hist_data[0]) {
           // ['trade_date', 'open', 'close', 'low', 'high'], 3 means close
-          this.updateForm.companies[company_index].close = response.hist_data[0][3]
-          this.computeFund(null, this.updateForm, company_index)
+          this.activityForm.companies[company_index].close = response.hist_data[0][3]
+          this.computeFund(null, this.activityForm, company_index)
         } else {
-          this.updateForm.companies[company_index].close = 0
-          this.computeFund(null, this.updateForm, company_index)
+          this.activityForm.companies[company_index].close = 0
+          this.computeFund(null, this.activityForm, company_index)
         }
       })
     },
     handleBlur(event, company_index) {
-      const inputValue = this.updateForm.companies[company_index].ts_code_name
-      const companies = this.companies;
+      const inputValue = this.activityForm.companies[company_index].ts_code_name
+      const companies = this.companies
       if (inputValue) {
-        const results = inputValue ? companies.filter(this.createContainsFilter(inputValue)) : companies;
+        const results = inputValue ? companies.filter(this.createContainsFilter(inputValue)) : companies
         if (results.length === 1) {
           this.handleSelect(results[0], company_index)
         } else {
-          this.updateForm.companies[company_index].ts_code = ''
-          this.updateForm.companies[company_index].name = ''
-          this.updateForm.companies[company_index].ts_code_name = ''
+          this.activityForm.companies[company_index].ts_code = ''
+          this.activityForm.companies[company_index].name = ''
+          this.activityForm.companies[company_index].ts_code_name = ''
         }
       }
     },
-    computeFund(event, updateForm, company_index) {
-      if(updateForm.timestamp == null || updateForm.timestamp === '') {
+    computeFund(event, activityForm, company_index) {
+      if (activityForm.timestamp == null || activityForm.timestamp === '') {
         return
       }
-      if (this.lineChartData.timestamp.indexOf(updateForm.timestamp) !== -1) {
-        updateForm.stock = this.lineChartData.data[0][this.lineChartData.timestamp.indexOf(updateForm.timestamp)]
+      if (this.lineChartData.timestamp.indexOf(activityForm.timestamp) !== -1) {
+        activityForm.stock = this.lineChartData.data[0][this.lineChartData.timestamp.indexOf(activityForm.timestamp)]
       } else if (this.compositionForm.activities.length > 0) {
-        updateForm.stock = this.compositionForm.activities[0].stock
+        activityForm.stock = this.compositionForm.activities[0].stock
       } else {
-        updateForm.stock = this.compositionForm.stock
+        activityForm.stock = this.compositionForm.stock
       }
       if (company_index != null && company_index !== '') {
-        updateForm.companies[company_index].allfund = updateForm.companies[company_index].close * updateForm.companies[company_index].share
-        updateForm.freecash = updateForm.stock - updateForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
+        activityForm.companies[company_index].allfund = activityForm.companies[company_index].close * activityForm.companies[company_index].share
+        activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
       } else {
         const queryParams = {
-          date__lte: updateForm.timestamp,
-          date__gte: updateForm.timestamp
+          date__lte: activityForm.timestamp,
+          date__gte: activityForm.timestamp
         }
         let ts_code_list_string = ''
-        for (const item of updateForm.companies) {
+        for (const item of activityForm.companies) {
           if (item.ts_code) {
             ts_code_list_string += item.ts_code + ','
           }
@@ -381,16 +456,16 @@ export default {
         if (ts_code_list_string !== '') {
           fetchCompanyClose(ts_code_list_string, queryParams).then(response => {
             if (response.close_data[0]) {
-              for (let i = 0; i < updateForm.companies.length; i++) {
+              for (let i = 0; i < activityForm.companies.length; i++) {
                 for (let j = 0; j < response.ts_code_list.length; j++) {
-                  if (updateForm.companies[i].ts_code === response.ts_code_list[j]) {
-                    updateForm.companies[i].name = response.name_list[j]
-                    updateForm.companies[i].close = response.close_data[j][0]
-                    updateForm.companies[i].allfund = updateForm.companies[i].close * updateForm.companies[i].share
+                  if (activityForm.companies[i].ts_code === response.ts_code_list[j]) {
+                    activityForm.companies[i].name = response.name_list[j]
+                    activityForm.companies[i].close = response.close_data[j][0]
+                    activityForm.companies[i].allfund = activityForm.companies[i].close * activityForm.companies[i].share
                   }
                 }
               }
-              updateForm.freecash = updateForm.stock - updateForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
+              activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
             }
           })
         }
@@ -416,6 +491,65 @@ export default {
     updateState() {
       dailyTrader(this.compositionForm).then(response => {
         this.lineChartData = Object.assign({}, response)
+      })
+    },
+    setTagsViewTitle() {
+      const title = 'Edit Composition'
+      const route = Object.assign({}, this.tempRoute, { title: `${title}-${this.compositionForm.id}` })
+      this.$store.dispatch('tagsView/updateVisitedView', route)
+    },
+    setPageTitle() {
+      const title = 'Edit Composition'
+      document.title = `${title} - ${this.compositionForm.id}`
+    },
+    saveComposition(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          if (this.isEdit) {
+            updateItem(this.compositionForm.id, this.compositionForm).then(
+              response => {
+                this.compositionForm = Object.assign({}, response)
+                this.$message({
+                  message: 'Successful saved composition',
+                  type: 'Success'
+                })
+                this.saveCompositionVisible = false
+              }
+            )
+            .catch(
+              error => {
+                this.$message({
+                  showClose: true,
+                  message: error,
+                  type: 'Error'
+                })
+              }
+            )
+          } else {
+            createItem(this.compositionForm).then(
+              response => {
+                this.compositionForm = Object.assign({}, response)
+                this.$message({
+                  message: 'Successful saved composition',
+                  type: 'Success'
+                })
+                this.saveCompositionVisible = false
+                this.$router.push({
+                  path: '/composition/edit/'+this.compositionForm.id
+                })
+              }
+            )
+            .catch(
+              error => {
+                this.$message({
+                  showClose: true,
+                  message: error,
+                  type: 'Error'
+                })
+              }
+            )
+          }
+        }
       })
     }
   }

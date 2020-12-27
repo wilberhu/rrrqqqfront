@@ -29,41 +29,21 @@
           <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="title" sortable label="Title">
+      <el-table-column align="center" prop="name" sortable label="Name">
         <template slot-scope="scope">
-          <router-link :to="'/strategy/edit/'+scope.row.id" class="link-type">
-            <span>{{ scope.row.title }}</span>
+          <router-link :to="'/composition/edit/'+scope.row.id" class="link-type">
+            <span>{{ scope.row.name }}</span>
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="start_date" sortable label="Start_Date">
+      <el-table-column align="center" prop="stock" sortable label="Stock">
         <template slot-scope="scope">
-          <span>{{ scope.row.start_date }}</span>
+          <span>{{ scope.row.stock }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="start_date" sortable label="Start_Date">
+      <el-table-column align="center" prop="modified" sortable label="Modified">
         <template slot-scope="scope">
-          <span>{{ scope.row.start_date }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="Total_Returns" sortable label="Total_Returns">
-        <template slot-scope="scope">
-          {{ scope.row.Total_Returns }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="Annual_Returns" sortable label="Annual_Returns">
-        <template slot-scope="scope">
-          {{ scope.row.Annual_Returns }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="created" sortable label="Date">
-        <template slot-scope="scope">
-          <span>{{ scope.row.created | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="Result">
-        <template slot-scope="scope">
-          <el-button type="primary" size="small" icon="el-icon-view" @click="viewResult(scope.$index, scope.row)">Result</el-button>
+          <span>{{ scope.row.modified }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="Owner">
@@ -74,7 +54,7 @@
 
       <el-table-column align="center" label="Actions">
         <template slot-scope="scope">
-          <router-link :to="'/strategy/edit/'+scope.row.id">
+          <router-link :to="'/composition/edit/'+scope.row.id">
             <el-button type="text" size="small" icon="el-icon-edit">Edit</el-button>
           </router-link>
           <el-button type="text" size="small" icon="el-icon-delete" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
@@ -112,7 +92,7 @@
 
 <script>
 import { Message } from 'element-ui'
-import { fetchList, deleteItem, fetchResult } from '@/api/strategy'
+import { fetchList, getItem, createItem, updateItem, deleteItem,  } from '@/api/composition'
 import Pagination from '@/components/Pagination'
 
 export default {

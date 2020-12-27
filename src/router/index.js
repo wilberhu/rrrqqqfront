@@ -190,7 +190,7 @@ export const constantRoutes = [
         path: 'list',
         component: () => import('@/views/composition/list'),
         name: 'CompositionList',
-        meta: { title: 'composition_list', icon: 'list' }
+        meta: { title: 'composition_list', noCache: true, icon: 'list' }
       },
       {
         path: 'create',
@@ -202,7 +202,7 @@ export const constantRoutes = [
         path: 'edit/:id(\\d+)',
         component: () => import('@/views/composition/edit'),
         name: 'EditComposition',
-        meta: { title: 'edit_composition', noCache: true },
+        meta: { title: 'edit_composition', activeMenu: '/composition/list'  },
         hidden: true
       }
     ]

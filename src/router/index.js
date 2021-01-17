@@ -160,6 +160,25 @@ export const constantRoutes = [
         hidden: true
       },
       {
+        path: 'stock_picking_list',
+        component: () => import('@/views/strategy/StockPickingList'),
+        name: 'StrategyPickingList',
+        meta: { title: 'stock_picking_list', icon: 'list' }
+      },
+      {
+        path: 'create_stock_picking',
+        component: () => import('@/views/strategy/CreateStockPicking'),
+        name: 'CreateStockPicking',
+        meta: { title: 'create_stock_picking', icon: 'edit' }
+      },
+      {
+        path: 'edit_stock_picking/:id(\\d+)',
+        component: () => import('@/views/strategy/EditStockPicking'),
+        name: 'EditStockPicking',
+        meta: { title: 'edit_stock_picking', noCache: true },
+        hidden: true
+      },
+      {
         path: 'result',
         component: () => import('@/views/strategy/result'),
         name: 'StrategyResult',

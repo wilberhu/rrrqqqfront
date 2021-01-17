@@ -3,8 +3,16 @@
     <el-form ref="compositionForm" :model="compositionForm">
       <el-row :gutter="8">
         <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}" style="padding-right:8px;margin-bottom:30px;">
+          <el-form-item label="组合名称" label-width="120px" v-if="isEdit">
+            <el-tooltip class="item" :content="compositionForm.description" :disabled="!compositionForm.description" placement="bottom">
+              <span>{{compositionForm.name}}</span>
+            </el-tooltip>
+          </el-form-item>
           <el-form-item label="资金总额" label-width="120px">
-            <el-input type="number" v-model="compositionForm.stock" placeholder="请输入内容"></el-input>
+            <el-input type="number" v-model="compositionForm.allfund" placeholder="请输入内容"></el-input>
+          </el-form-item>
+          <el-form-item label="手续费" label-width="120px">
+            <el-input type="number" :step="0.0001" v-model="compositionForm.comission" placeholder="eg: 0.0005"></el-input>
           </el-form-item>
           <el-timeline :reverse="false">
             <el-timeline-item
@@ -32,8 +40,7 @@
             <i class="el-icon-circle-plus" />
           </div>
           <el-button
-            style="margin-top:40px;"
-            :loading="loading"
+            style="margin:40px;"
             class="code-button-item"
             type="primary"
             @click.native.prevent="saveCompositionVisible=true"
@@ -49,9 +56,9 @@
 
     <!-- 编辑弹出框 -->
     <el-dialog :visible.sync="editVisible" :title="isTimestampEdit ? 'Edit' : 'Add'" width="80vw" center>
-      <el-form ref="compositionForm" :model="activityForm">
+      <el-form ref="compositionForm" :model="activityForm" class="edit_dialog">
         <el-form-item label="资金总额" label-width="120px">
-          <el-input :readonly="'readonly'" v-model="activityForm.stock" placeholder="请输入内容" style="width: 220px;"></el-input>
+          <el-input type="number" readonly="readonly" v-model="activityForm.stock" placeholder="请输入内容" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label="日期" label-width="120px">
           <el-date-picker
@@ -89,6 +96,9 @@
             </el-button>
           </el-form-item>
           <el-button style="margin-top: 10px;" type="primary" plain @click="addCompany()">Add</el-button>
+
+          <el-button v-if="activityForm.timestamp && compositionForm.activities.length > 1 && activityForm.timestamp > compositionForm.activities[0].timestamp"
+                     style="margin-left: 30px; margin-top: 10px;" type="info" plain @click="importPreviousPosition">Import previous position</el-button>
         </el-form-item>
         <el-form-item label="空闲资金" label-width="120px" style="margin: 10px 0 0 0;">
           <el-input v-model="activityForm.freecash" :readonly="'readonly'" style="width: 220px;"></el-input>
@@ -117,7 +127,7 @@
           <el-input v-model="compositionForm.name" placeholder="请输入名称" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label="组合介绍" label-width="120px">
-          <el-input v-model="compositionForm.description" placeholder="请输入介绍" style="width: 220px;"></el-input>
+          <el-input type="textarea" v-model="compositionForm.description" placeholder="请输入介绍" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label-width="120px">
           <span class="dialog-footer">
@@ -131,12 +141,36 @@
 </template>
 
 <script>
-// import { fetchItem, fetchHighlight, createItem, updateItem } from '@/api/strategy'
 import { fetchAllCompanies } from '@/api/basic'
 import { getHistData, fetchCompanyClose } from '@/api/histData'
-import { dailyTrader, fetchItem, createItem, updateItem } from '@/api/composition'
-// import Pagination from '@/components/Pagination'
+import { dailyTrader, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'
+
+
+let tradeCalender = []
+const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
+  const date = new Date(timestamp)
+  const o = {
+    'y+': date.getFullYear(),
+    'M+': date.getMonth() + 1, // 月份 "d+": value.getDate(), // 日
+    'd+': date.getDate(),
+    'h+': date.getHours(), // 小时 "m+": value.getMinutes(), // 分 "s+": value.getSeconds(), // 秒
+    'm+': date.getMinutes(),
+    's+': date.getSeconds()
+  }
+  if (/(y+)/.test(format)) {
+    format = format.replace(RegExp.$1, (date.getFullYear() + '').substr(4 - RegExp.$1.length))
+  }
+  for (const k in o) {
+    if (new RegExp('(' + k + ')').test(format)) {
+      format = format.replace(
+        RegExp.$1,
+        RegExp.$1.length === 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length)
+      )
+    }
+  }
+  return format
+}
 
 export default {
   name: 'CompositionDetail',
@@ -152,12 +186,12 @@ export default {
   data() {
     return {
       companies: [],
-      tmpCompany: '',
       compositionForm: {
         id: undefined,
         name: undefined,
         description: undefined,
-        stock: 100000,
+        allfund: 100000,
+        comission: 0,
         activities: []
       },
       activityForm: {
@@ -170,8 +204,6 @@ export default {
       deleteTimestampForm: {
         index: undefined
       },
-      loading: false,
-      listLoading: false,
       reverse: true,
       lineChartData: {
         timestamp: [],
@@ -184,13 +216,13 @@ export default {
       saveCompositionVisible: false,
       datePickerOptions: {
         disabledDate(date) {
-          return date > new Date() || date < Date.parse('2000-01-01') || date.getDay() === 0 || date.getDay() === 6
+          return tradeCalender.indexOf(formatDate(date, 'yyyy-MM-dd')) === -1
         }
       },
       rules: {
         name: [
           { required: true, message: '请输入组合名称', trigger: 'blur' },
-          { min: 4, max: 30, message: '长度在 4 到 30 个字符', trigger: 'blur' }
+          { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
         ]
       },
       tempRoute: {}
@@ -207,6 +239,7 @@ export default {
     }
 
     this.getAllCompanies()
+    this.getTradeCalender()
 
     // Why need to make a copy of this.$route here?
     // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
@@ -239,6 +272,9 @@ export default {
       this.editVisible = true
       this.isTimestampEdit = false
     },
+    importPreviousPosition() {
+      this.activityForm.companies = Object.assign([], this.compositionForm.activities[0].companies)
+    },
     editTimestamp(index) {
       this.activityForm = Object.assign({}, this.compositionForm.activities[index])
       this.editVisible = true
@@ -257,7 +293,7 @@ export default {
       if (isNaN(this.activityForm.freecash) || this.activityForm.freecash < 0) {
         this.$message({
           showClose: true,
-          message: 'Free stock less than 0',
+          message: 'Free cash less than 0',
           type: 'Error'
         })
         return
@@ -367,10 +403,11 @@ export default {
     },
     deleteCompany(item, company_index) {
       this.activityForm.companies.splice(company_index, 1)
+      this.activityForm.freecash = this.activityForm.stock - this.activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
     },
     querySearchAsync(queryString, cb) {
-      var companies = this.companies
-      var results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies
+      const companies = this.companies;
+      const results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies;
       clearTimeout(this.timeout)
       this.timeout = setTimeout(() => {
         cb(results)
@@ -423,10 +460,8 @@ export default {
       }
       if (this.lineChartData.timestamp.indexOf(activityForm.timestamp) !== -1) {
         activityForm.stock = this.lineChartData.data[0][this.lineChartData.timestamp.indexOf(activityForm.timestamp)]
-      } else if (this.compositionForm.activities.length > 0) {
-        activityForm.stock = this.compositionForm.activities[0].stock
       } else {
-        activityForm.stock = this.compositionForm.stock
+        activityForm.stock = this.compositionForm.allfund
       }
       if (company_index != null && company_index !== '') {
         activityForm.companies[company_index].allfund = activityForm.companies[company_index].close * activityForm.companies[company_index].share
@@ -454,16 +489,14 @@ export default {
                   }
                 }
               }
-              activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
             }
           })
         }
+        activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
       }
     },
     getAllCompanies() {
-      this.listLoading = true
       fetchAllCompanies().then(response => {
-        this.listLoading = false
         this.companies = []
         for (const item of response) {
           this.companies.push({
@@ -473,7 +506,13 @@ export default {
           })
         }
         setTimeout(() => {
-          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+    },
+    getTradeCalender() {
+      fetchTradeCalender().then(response => {
+        tradeCalender = response.results
+        setTimeout(() => {
         }, 1.5 * 1000)
       })
     },
@@ -604,5 +643,9 @@ export default {
   }
   .add:after {
     content: '';
+  }
+  .edit_dialog {
+    height: 60vh;
+    overflow: auto;
   }
 </style>

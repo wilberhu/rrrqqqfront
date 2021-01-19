@@ -1,17 +1,10 @@
 <template>
   <div class="tab-container">
-<!--    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
-    <vue-fab
-      :main-btn-color="'#2196F3'"
-      :fab-animate-bezier="'ease-out'"
-      :fab-auto-hide-animate-model="'alive'"
-      :scroll-auto-hide="false"
-      prop="open"
-      style="right: 13%; bottom: 15%"
-      icon="multiline_chart"
-      size="big"
-      fab-item-animate="alive"
-      @clickMainBtn="clickMainBtn"/>
+    <div class="filter-container">
+      <el-button type="primary" icon="el-icon-edit" @click="handleCreate">
+        Add
+      </el-button>
+    </div>
     <el-table
       v-loading="listLoading"
       ref="multipleTable"
@@ -29,24 +22,29 @@
           <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="title" sortable label="Title">
+      <el-table-column align="center" prop="title" sortable label="Key">
         <template slot-scope="scope">
           <router-link :to="'/strategy/edit/'+scope.row.id" class="link-type">
-            <span>{{ scope.row.title }}</span>
+            <span>{{ scope.row.key }}</span>
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created" sortable label="Date">
+      <el-table-column align="center" prop="created" sortable label="Label">
         <template slot-scope="scope">
-          <span>{{ scope.row.created | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ scope.row.label }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="modified" sortable label="Date">
+      <el-table-column align="center" prop="modified" sortable label="Table">
         <template slot-scope="scope">
-          <span>{{ scope.row.modified | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ scope.row.table }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="Owner">
+      <el-table-column align="center" prop="method" sortable label="Method">
+        <template slot-scope="scope">
+          <span>{{ scope.row.method }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="owner" label="Owner">
         <template slot-scope="scope">
           <span>{{ scope.row.owner }}</span>
         </template>
@@ -54,9 +52,7 @@
 
       <el-table-column align="center" label="Actions">
         <template slot-scope="scope">
-          <router-link :to="'/strategy/edit/'+scope.row.id">
-            <el-button type="text" size="small" icon="el-icon-edit">Edit</el-button>
-          </router-link>
+          <el-button type="text" size="small" icon="el-icon-edit" @click="handleUpdate(scope.row)">Edit</el-button>
           <el-button type="text" size="small" icon="el-icon-delete" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
         </template>
       </el-table-column>
@@ -73,30 +69,44 @@
       </span>
     </el-dialog>
 
-    <!-- MultiLine弹出框 -->
-    <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
-      <el-form label-width="100px">
-        <el-form-item label="companies: ">
-          <el-tag v-for="tag in multipleSelection" :key="tag.id" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.id }} - {{ tag.title }}</el-tag>
+    <!-- 编辑提示框 -->
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="filterOption" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+        <el-form-item label="Key" prop="key">
+          <el-input v-model="filterOption.key" />
+        </el-form-item>
+        <el-form-item label="Label" prop="label">
+          <el-input v-model="filterOption.label" />
+        </el-form-item>
+        <el-form-item label="Table" prop="table">
+          <el-select v-model="filterOption.table" class="filter-item" placeholder="Please select">
+            <el-option v-for="item in tableOptions" :key="item.key" :label="item.label" :value="item.key" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Method" prop="method">
+          <el-select v-model="filterOption.method" class="filter-item" placeholder="Please select">
+            <el-option v-for="item in methodOptions" :key="item.key" :label="item.label" :value="item.key" />
+          </el-select>
         </el-form-item>
       </el-form>
-
       <div slot="footer" class="dialog-footer">
-        <el-button @click="multiLineVisible = false">{{ $t('table.cancel') }}</el-button>
-        <el-button type="primary" @click="showCharts">Show Charts</el-button>
+        <el-button @click="dialogFormVisible = false">
+          Cancel
+        </el-button>
+        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">
+          Confirm
+        </el-button>
       </div>
     </el-dialog>
-
   </div>
 </template>
 
 <script>
-import { Message } from 'element-ui'
-import { fetchList, deleteItem } from '@/api/strategy'
+import { fetchList, createItem, updateItem, deleteItem } from '@/api/filterOption'
 import Pagination from '@/components/Pagination'
 
 export default {
-  name: 'StratageList',
+  name: 'FilterOptionList',
   components: { Pagination },
   filters: {
     statusFilter(status) {
@@ -126,8 +136,38 @@ export default {
       index: null,
       row: null,
       delVisible: false,
-      multiLineVisible: false,
-      multipleSelection: []
+      multipleSelection: [],
+      filterOption: {
+        id: undefined,
+        key: '',
+        label: '',
+        method: '',
+        table: ''
+      },
+      dialogFormVisible: false,
+      dialogStatus: '',
+      textMap: {
+        update: 'Edit',
+        create: 'Create'
+      },
+      tableOptions: [
+        {
+          key: 'fina_indicators',
+          label: 'fina_indicators'
+        }
+      ],
+      methodOptions: [
+        {
+          key: 'query',
+          label: 'query'
+        }
+      ],
+      rules: {
+        key: [{ required: true, message: 'key is required', trigger: 'change' }],
+        label: [{ required: true, message: 'label is required', trigger: 'change' }],
+        table: [{ required: true, message: 'table is required', trigger: 'blur' }],
+        method: [{ required: true, message: 'method is required', trigger: 'blur' }]
+      }
     }
   },
   computed: {
@@ -178,6 +218,64 @@ export default {
       }
       this.handleSearch()
     },
+    resetTemp() {
+      this.filterOption = {
+        id: undefined,
+        key: '',
+        label: '',
+        method: '',
+        table: ''
+      }
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          createItem(this.filterOption).then(() => {
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Created Successfully',
+              type: 'success',
+              duration: 2000
+            })
+            this.getList()
+          })
+        }
+      })
+    },
+    handleUpdate(row) {
+      this.filterOption = Object.assign({}, row) // copy obj
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.filterOption)
+          updateItem(tempData.id, tempData).then(() => {
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Update Successfully',
+              type: 'success',
+              duration: 2000
+            })
+            this.getList()
+          })
+        }
+      })
+    },
     handleDelete(index, row) {
       this.index = index
       this.row = row
@@ -215,37 +313,6 @@ export default {
           return 0
         }
       }
-    },
-    clickMainBtn() {
-      this.multipleSelection.sort(this.compare('id'))
-      this.multiLineVisible = !this.multiLineVisible
-    },
-    closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].id === tag.id) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
-      this.multipleSelection.sort(this.compare('id'))
-    },
-    showCharts() {
-      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
-        Message({
-          // message: error.message,
-          message: 'The companies should be more than 0 and less than 10',
-          type: 'error',
-          duration: 5 * 1000
-        })
-        return
-      }
-      this.$router.push({
-        name: 'StrategyCompareChart',
-        params: {
-          codes: this.multipleSelection
-        }
-      })
-      this.multiLineVisible = false
     }
   }
 }
@@ -254,29 +321,5 @@ export default {
 <style>
   .tab-container {
     margin: 20px;
-  }
-  /* fallback */
-  @font-face {
-    font-family: 'Material Icons';
-    font-style: normal;
-    font-weight: 400;
-    src: url("../../icons/gstatic/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2") format('woff2');
-    /*src: url(https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');*/
-  }
-
-  .material-icons {
-    font-family: 'Material Icons';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-feature-settings: 'liga';
-    -webkit-font-smoothing: antialiased;
   }
 </style>

@@ -1,27 +1,29 @@
 <template>
   <div class="app-container">
-    <el-form ref="filterForm" label-position="left" label-width="160px" :model="filterForm" style="padding: 0 40px;">
-      <el-row :gutter="8">
-        <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}" style="padding-right:8px;margin-bottom:30px;">
-          <el-button
-            :loading="loading"
-            class="code-button-item"
-            type="primary"
-            @click.native.prevent="editVisible=true; makeFilterListChecked()"
-          >Pick Filter</el-button>
-          <el-form-item label="开始日期">
-            <el-date-picker
-              :picker-options="datePickerOptions"
-              v-model="filterForm.startTime"
-              format="yyyy-MM-dd"
-              value-format="yyyy-MM-dd"
-              type="date"
-              aria-required="true"
-              placeholder="选择日期"
-            >
-            </el-date-picker>
-          </el-form-item>
-          <el-form-item v-for="(filter, filter_index) in filterForm.filterList" :key="filter_index + '_filter'" style="white-space: nowrap">
+    <el-tabs v-model="activeName" @tab-click="handleTabClick">
+      <el-tab-pane label="factor" name="factor">
+        <el-form ref="filterForm" label-position="left" label-width="160px" :model="filterForm" style="padding: 0 40px;">
+          <el-row :gutter="8">
+            <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}" style="padding-right:8px;margin-bottom:30px;">
+              <el-button
+                :loading="loading"
+                class="code-button-item"
+                type="primary"
+                @click.native.prevent="editVisible=true; makeFilterListChecked()"
+              >Pick Filter</el-button>
+              <el-form-item label="开始日期">
+                <el-date-picker
+                  :picker-options="datePickerOptions"
+                  v-model="filterForm.startTime"
+                  format="yyyy-MM-dd"
+                  value-format="yyyy-MM-dd"
+                  type="date"
+                  aria-required="true"
+                  placeholder="选择日期"
+                >
+                </el-date-picker>
+              </el-form-item>
+              <el-form-item v-for="(filter, filter_index) in filterForm.filterList" :key="filter_index + '_filter'" style="white-space: nowrap">
             <span slot="label">
               <span style="display:inline-block; width:120px;">{{filter.label}}</span>
               <el-popover
@@ -35,35 +37,41 @@
                   active-value="or"
                   inactive-value="and">
                 </el-switch>
-                <el-checkbox v-for="(match_option, match_option_index) in matchOptions" :label="match_option.key" :key="filter_index + '_' + match_option_index" v-model="filter.filterConditionsTemp">{{match_option.label}}</el-checkbox>
+                <el-checkbox v-for="(match_option, match_option_index) in matchOptions" :label="match_option.key" :key="filter_index + '_' + match_option_index" v-model="filter.filterConditionListString">{{match_option.label}}</el-checkbox>
                 <div style="text-align: right; margin: 0">
                   <el-button size="mini" type="text" @click="filter.visible = false">取消</el-button>
-                  <el-button type="primary" size="mini" @click="filter.visible = false; submitMatchOption(filter_index, filter.filterConditionsTemp)">确定</el-button>
+                  <el-button type="primary" size="mini" @click="filter.visible = false; submitMatchOption(filter_index, filter.filterConditionListString)">确定</el-button>
                 </div>
                 <div class="edit" slot="reference" style="display:inline-block" @click="makeMatchOptionChecked(filter_index)" >
                   <i class="el-icon-edit" />
                 </div>
               </el-popover>
             </span>
-            <template v-for="(filter_condition, filter_condition_index) in filter.filterConditions" style="white-space: nowrap;">
-              <el-input placeholder="value" v-model="filter_condition.value" :key="filter_index + '_' + filter_condition_index" style="margin-right: 10px; width: 140px;">
-                <template slot="prepend">{{filter_condition.symbol}}</template>
-              </el-input>
-              <span :key="filter_condition_index + '_symbol'" v-if="filter_condition_index!==filter.filterConditions.length-1" style="margin-right: 10px;">{{filter.match}}</span>
-            </template>
-          </el-form-item>
-          <el-button
-            :loading="loading"
-            class="code-button-item"
-            type="primary"
-            @click.native.prevent="submit()"
-          >Submit</el-button>
-        </el-col>
-      </el-row>
-    </el-form>
+                <template v-for="(filter_condition, filter_condition_index) in filter.filterConditionList" style="white-space: nowrap;">
+                  <el-input placeholder="value" v-model="filter_condition.value" :key="filter_index + '_' + filter_condition_index" style="margin-right: 10px; width: 140px;">
+                    <template slot="prepend">{{filter_condition.symbol}}</template>
+                  </el-input>
+                  <span :key="filter_condition_index + '_symbol'" v-if="filter_condition_index!==filter.filterConditionList.length-1" style="margin-right: 10px;">{{filter.match}}</span>
+                </template>
+              </el-form-item>
+              <el-button
+                :loading="loading"
+                class="code-button-item"
+                type="primary"
+                @click.native.prevent="submit()"
+              >Submit</el-button>
+            </el-col>
+          </el-row>
+        </el-form>
+      </el-tab-pane>
+      <el-tab-pane label="backtrader" name="backtrader">
+
+      </el-tab-pane>
+    </el-tabs>
+
     <hr>
 
-    <composition-detail :is-edit="false" style="padding:0;" />
+    <composition-detail ref="compositionDetail" :is-edit="false" style="padding:0;" />
 
     <!-- 编辑弹出框 -->
     <el-dialog :visible.sync="editVisible" title="Select filters">
@@ -73,12 +81,12 @@
           :filter-method="filterMethod"
           filter-placeholder=""
           :titles="['Unselected Filters', 'Selected Filters']"
-          v-model="filterForm.filterListTemp"
+          v-model="filterForm.filterListString"
           :data="filterOptions">
         </el-transfer>
         <el-form-item>
           <span class="dialog-footer">
-            <el-button style="margin-top: 10px;" size="small" type="primary" @click="editVisible=false; submitFilterList(filterForm.filterListTemp)">Submit</el-button>
+            <el-button style="margin-top: 10px;" size="small" type="primary" @click="editVisible=false; submitFilterList(filterForm.filterListString)">Submit</el-button>
           </span>
         </el-form-item>
       </el-form>
@@ -87,8 +95,10 @@
 </template>
 
 <script>
-import { dailyTrader, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
+import { fetchItem, fetchTradeCalender } from '@/api/composition'
+import { fetchList as fetchFilterOptionList } from '@/api/filterOption'
 import CompositionDetail from '../../composition/components/CompositionDetail'
+import { strategyFilter } from '@/api/strategy'
 
 const start = new Date(new Date().getTime() - 3600 * 1000 * 24 * 365)
 let tradeCalender = []
@@ -127,32 +137,8 @@ export default {
   },
   data() {
     return {
-      filterOptions: [
-        {
-          key: 'roe',
-          label: '净资产收益率'
-        },
-        {
-          key: 'ocfps',
-          label: '经营性现金流（每股）'
-        },
-        {
-          key: 'q_profit_yoy',
-          label: '净利润同比增长率'
-        },
-        {
-          key: 'q_profit_qoq',
-          label: '净利润环比增长率'
-        },
-        {
-          key: 'q_gr_yoy',
-          label: '同比营收增长率'
-        },
-        {
-          key: 'q_gr_qoq',
-          label: '环比营收增长率'
-        }
-      ],
+      activeName: 'factor',
+      filterOptions: [],
       matchOptions: [
         {
           key: 'gt',
@@ -186,8 +172,10 @@ export default {
         }
       ],
       filterForm: {
+        allfund: undefined,
+        comission: undefined,
         startTime: formatDate(start, 'yyyy-MM-dd'),
-        filterListTemp: [],
+        filterListString: [],
         filterList: []
       },
       editVisible: false,
@@ -206,17 +194,27 @@ export default {
   },
   created() {
     this.getTradeCalender()
-    for (const filterOption of this.filterOptions) {
-      filterOption['match'] = 'and'
-      filterOption['visible'] = false
-      filterOption['filterConditionsTemp'] = []
-      filterOption['filterConditions'] = []
-    }
+    this.getFilterOptions()
   },
   methods: {
+    handleTabClick(tab, event) {
+      // console.log(tab, event)
+    },
     getTradeCalender() {
       fetchTradeCalender().then(response => {
         tradeCalender = response.results
+        setTimeout(() => {
+        }, 1.5 * 1000)
+      })
+    },
+    getFilterOptions() {
+      fetchFilterOptionList().then(response => {
+        this.filterOptions = response.results
+        for (const filterOption of this.filterOptions) {
+          filterOption['match'] = 'and'
+          filterOption['filterConditionListString'] = []
+          filterOption['filterConditionList'] = []
+        }
         setTimeout(() => {
         }, 1.5 * 1000)
       })
@@ -233,35 +231,51 @@ export default {
         })
     },
     submit() {
-
+      this.filterForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
+      this.filterForm.comission = this.$refs.compositionDetail.compositionForm.comission
+      console.log(this.filterForm)
+      strategyFilter(this.filterForm)
+        .then(response => {
+          this.$message.success('Filtered successfully!')
+          this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
+          this.$refs.compositionDetail.updateState()
+        })
     },
     makeFilterListChecked() {
-      this.filterForm.filterListTemp = []
+      this.filterForm.filterListString = []
       for (const filter of this.filterForm.filterList) {
-        this.filterForm.filterListTemp.push(filter.key)
+        this.filterForm.filterListString.push(filter.key)
       }
     },
-    submitFilterList(filterListTemp) {
+    submitFilterList(filterListString) {
+      const temp = Object.assign([], this.filterForm.filterList)
       this.filterForm.filterList = []
-      for (const filter of filterListTemp) {
-        const filterOptionIndex = this.indexOf(this.filterOptions, filter)
-        if (filterOptionIndex > -1) {
-          this.filterForm.filterList.push(Object.assign({}, this.filterOptions[filterOptionIndex]))
+      for (const filter of filterListString) {
+        const filterOptionIndex1 = this.indexOf(temp, filter)
+        const filterOptionIndex2 = this.indexOf(this.filterOptions, filter)
+        if (filterOptionIndex1 > -1) {
+          this.filterForm.filterList.push(Object.assign({}, temp[filterOptionIndex1]))
+        } else if (filterOptionIndex2 > -1) {
+          this.filterForm.filterList.push(Object.assign({}, this.filterOptions[filterOptionIndex2]))
         }
       }
     },
     makeMatchOptionChecked(filter_index) {
-      this.filterForm.filterList[filter_index].filterConditionsTemp = []
-      for (const filterCondition of this.filterForm.filterList[filter_index].filterConditions) {
-        this.filterForm.filterList[filter_index].filterConditionsTemp.push(filterCondition.key)
+      this.filterForm.filterList[filter_index].filterConditionListString = []
+      for (const filterCondition of this.filterForm.filterList[filter_index].filterConditionList) {
+        this.filterForm.filterList[filter_index].filterConditionListString.push(filterCondition.key)
       }
     },
-    submitMatchOption(filter_index, filterConditionsTemp) {
-      this.filterForm.filterList[filter_index].filterConditions = []
-      for (const filterCondition of filterConditionsTemp) {
-        const matchOptionIndex = this.indexOf(this.matchOptions, filterCondition)
-        if (matchOptionIndex > -1) {
-          this.filterForm.filterList[filter_index].filterConditions.push(Object.assign({}, this.matchOptions[matchOptionIndex]))
+    submitMatchOption(filter_index, filterConditionListString) {
+      const temp = Object.assign([], this.filterForm.filterList[filter_index].filterConditionList)
+      this.filterForm.filterList[filter_index].filterConditionList = []
+      for (const filterCondition of filterConditionListString) {
+        const matchOptionIndex1 = this.indexOf(temp, filterCondition)
+        const matchOptionIndex2 = this.indexOf(this.matchOptions, filterCondition)
+        if (matchOptionIndex1 > -1) {
+          this.filterForm.filterList[filter_index].filterConditionList.push(Object.assign({}, temp[matchOptionIndex1]))
+        } else if (matchOptionIndex2 > -1) {
+          this.filterForm.filterList[filter_index].filterConditionList.push(Object.assign({}, this.matchOptions[matchOptionIndex2]))
         }
       }
     },

@@ -15,16 +15,9 @@ export function fetchItem(id) {
   })
 }
 
-export function fetchHighlight(id) {
+export function fetchItemCode(id) {
   return request({
-    url: '/api/strategies/' + id + '/highlight/',
-    method: 'get'
-  })
-}
-
-export function fetchResult(id) {
-  return request({
-    url: '/api/strategies/' + id + '/result/',
+    url: '/api/strategies/' + id + '/code/',
     method: 'get'
   })
 }
@@ -59,5 +52,13 @@ export function fetchStrategyCompare(code) {
     data: {
       code
     }
+  })
+}
+
+export function strategyFilter(data) {
+  return request({
+    url: '/api/strategy_filter/',
+    method: 'post',
+    data
   })
 }

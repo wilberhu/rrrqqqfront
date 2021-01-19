@@ -15,6 +15,7 @@ export default {
     strategy_list: 'Strategy List',
     create_strategy: 'Create Strategy',
     edit_strategy: 'Edit Strategy',
+    filter_option_list: 'Filter Option List',
     stock_picking_list: 'Stock Picking List',
     create_stock_picking: 'Create Stock Picking',
     edit_stock_picking: 'Edit Stock Picking',

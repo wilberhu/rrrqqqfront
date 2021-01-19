@@ -12,7 +12,7 @@
             <el-input type="number" v-model="compositionForm.allfund" placeholder="请输入内容"></el-input>
           </el-form-item>
           <el-form-item label="手续费" label-width="120px">
-            <el-input type="number" :step="0.0001" v-model="compositionForm.comission" placeholder="eg: 0.0005"></el-input>
+            <el-input type="number" :step="0.0001" min="0" max="0.1" v-model="compositionForm.comission" placeholder="eg: 0.0005"></el-input>
           </el-form-item>
           <el-timeline :reverse="false">
             <el-timeline-item
@@ -85,7 +85,7 @@
             ></el-autocomplete>
             <span style="margin-left: 20px;">股数：</span>
             <el-input type="number" min="0" :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 100px;" @input="computeFund($event, activityForm, company_index)"></el-input>
-            <span style="margin-left: 20px;">股价：{{ activityForm.companies[company_index].close || '' }}</span>
+            <span style="margin-left: 20px;">股价：{{ activityForm.companies[company_index].open || '' }}</span>
             <span style="margin-left: 20px;">资金：{{ activityForm.companies[company_index].allfund || '' }}</span>
             <el-button
               type="text"
@@ -97,11 +97,10 @@
           </el-form-item>
           <el-button style="margin-top: 10px;" type="primary" plain @click="addCompany()">Add</el-button>
 
-          <el-button v-if="activityForm.timestamp && compositionForm.activities.length > 1 && activityForm.timestamp > compositionForm.activities[0].timestamp"
-                     style="margin-left: 30px; margin-top: 10px;" type="info" plain @click="importPreviousPosition">Import previous position</el-button>
+          <el-button v-if="activityForm.timestamp && compositionForm.activities.length > 1 && activityForm.timestamp > compositionForm.activities[0].timestamp" style="margin-left: 30px; margin-top: 10px;" type="info" plain @click="importPreviousPosition">Import previous position</el-button>
         </el-form-item>
         <el-form-item label="空闲资金" label-width="120px" style="margin: 10px 0 0 0;">
-          <el-input v-model="activityForm.freecash" :readonly="'readonly'" style="width: 220px;"></el-input>
+          <el-input v-model="activityForm.freecash" :readonly="'readonly'" style="width: 220px;" />
         </el-form-item>
         <el-form-item label-width="120px">
           <span class="dialog-footer">
@@ -124,10 +123,10 @@
     <el-dialog :visible.sync="saveCompositionVisible" :title="isEdit ? 'Edit' : 'Add'" width="80vw" center>
       <el-form ref="compositionForm" :model="compositionForm" :rules="rules">
         <el-form-item label="组合名称" label-width="120px" prop="name">
-          <el-input v-model="compositionForm.name" placeholder="请输入名称" style="width: 220px;"></el-input>
+          <el-input v-model="compositionForm.name" placeholder="请输入名称" style="width: 220px;" />
         </el-form-item>
         <el-form-item label="组合介绍" label-width="120px">
-          <el-input type="textarea" v-model="compositionForm.description" placeholder="请输入介绍" style="width: 220px;"></el-input>
+          <el-input v-model="compositionForm.description" type="textarea" placeholder="请输入介绍" style="width: 220px;" />
         </el-form-item>
         <el-form-item label-width="120px">
           <span class="dialog-footer">
@@ -145,7 +144,6 @@ import { fetchAllCompanies } from '@/api/basic'
 import { getHistData, fetchCompanyClose } from '@/api/histData'
 import { dailyTrader, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'
-
 
 let tradeCalender = []
 const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
@@ -197,7 +195,6 @@ export default {
       activityForm: {
         companies: [],
         timestamp: undefined,
-        stock: undefined,
         freecash: undefined,
         allfund: undefined
       },
@@ -265,7 +262,6 @@ export default {
       this.activityForm = {
         companies: [],
         timestamp: undefined,
-        stock: undefined,
         freecash: undefined,
         allfund: undefined
       }
@@ -406,8 +402,8 @@ export default {
       this.activityForm.freecash = this.activityForm.stock - this.activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
     },
     querySearchAsync(queryString, cb) {
-      const companies = this.companies;
-      const results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies;
+      const companies = this.companies
+      const results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies
       clearTimeout(this.timeout)
       this.timeout = setTimeout(() => {
         cb(results)
@@ -431,11 +427,11 @@ export default {
       }
       getHistData(this.activityForm.companies[company_index].ts_code, queryParams).then(response => {
         if (response.hist_data[0]) {
-          // ['trade_date', 'open', 'close', 'low', 'high'], 3 means close
-          this.activityForm.companies[company_index].close = response.hist_data[0][3]
+          // ['trade_date', 'open', 'close', 'low', 'high'], 2 means open
+          this.activityForm.companies[company_index].open = response.hist_data[0][2]
           this.computeFund(null, this.activityForm, company_index)
         } else {
-          this.activityForm.companies[company_index].close = 0
+          this.activityForm.companies[company_index].open = 0
           this.computeFund(null, this.activityForm, company_index)
         }
       })
@@ -464,7 +460,7 @@ export default {
         activityForm.stock = this.compositionForm.allfund
       }
       if (company_index != null && company_index !== '') {
-        activityForm.companies[company_index].allfund = activityForm.companies[company_index].close * activityForm.companies[company_index].share
+        activityForm.companies[company_index].allfund = activityForm.companies[company_index].open * activityForm.companies[company_index].share
         activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
       } else {
         const queryParams = {
@@ -478,14 +474,14 @@ export default {
           }
         }
         if (ts_code_list_string !== '') {
-          fetchCompanyClose(ts_code_list_string, queryParams).then(response => {
+          fetchCompanyClose(ts_code_list_string, 'open', queryParams).then(response => {
             if (response.close_data[0]) {
               for (let i = 0; i < activityForm.companies.length; i++) {
                 for (let j = 0; j < response.ts_code_list.length; j++) {
                   if (activityForm.companies[i].ts_code === response.ts_code_list[j]) {
                     activityForm.companies[i].name = response.name_list[j]
-                    activityForm.companies[i].close = response.close_data[j][0]
-                    activityForm.companies[i].allfund = activityForm.companies[i].close * activityForm.companies[i].share
+                    activityForm.companies[i].open = response.close_data[j][0]
+                    activityForm.companies[i].allfund = activityForm.companies[i].open * activityForm.companies[i].share
                   }
                 }
               }

@@ -8,9 +8,9 @@ export function getHistData(ts_code, params) {
   })
 }
 
-export function fetchCompanyClose(ts_code, params) {
+export function fetchCompanyClose(ts_code, column='close', params) {
   return request({
-    url: '/api/close_data/',
+    url: '/api/data/' + column + '/',
     method: 'post',
     params,
     data: {

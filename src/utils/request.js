@@ -80,6 +80,11 @@ service.interceptors.response.use(
           location.reload()
         })
       )
+    } else {
+      Message({
+        message: res.detail,
+        type: 'error'
+      })
     }
     return Promise.reject(error)
   }

@@ -14,6 +14,7 @@ export default {
     strategy_list: '策略列表',
     create_strategy: '创建策略',
     edit_strategy: '编辑策略',
+    filter_option_list: '选股因子列表',
     stock_picking_list: '选股策略列表',
     create_stock_picking: '创建选股策略',
     edit_stock_picking: '编辑选股策略',

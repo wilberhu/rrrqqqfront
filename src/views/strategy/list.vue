@@ -36,12 +36,12 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created" sortable label="Date">
+      <el-table-column align="center" prop="created" sortable label="Created">
         <template slot-scope="scope">
           <span>{{ scope.row.created | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="modified" sortable label="Date">
+      <el-table-column align="center" prop="modified" sortable label="Modified">
         <template slot-scope="scope">
           <span>{{ scope.row.modified | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>

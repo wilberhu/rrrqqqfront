@@ -132,6 +132,8 @@ export default {
     },
     handleClose(tag) {
       this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
+      this.form.ts_code_list.splice(this.dynamicTags.indexOf(tag), 1)
+      this.form.name_list.splice(this.dynamicTags.indexOf(tag), 1)
     },
     handleSelect(item) {
       const inputValue = this.inputValue

@@ -24,9 +24,14 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="startTime" sortable label="Start_Date">
+      <el-table-column align="center" prop="method" sortable label="Method">
         <template slot-scope="scope">
-          <span>{{ scope.row.startTime }}</span>
+          <span>{{ scope.row.method }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="start_time" sortable label="Start_Date">
+        <template slot-scope="scope">
+          <span>{{ scope.row.start_time }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="modified" sortable label="Modified">

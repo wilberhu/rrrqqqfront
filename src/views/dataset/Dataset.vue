@@ -292,7 +292,6 @@
             this.listLoading = false
           }, 1.5 * 1000)
           if (response) {
-            console.log(str)
             this.$message({
               showClose: true,
               // message: 'deleted' + str.substring(0, str.length - 2),
@@ -366,7 +365,6 @@
           setTimeout(() => {
             this.listLoading = false
           }, 1.5 * 1000)
-          console.log(response)
           if (response) {
             this.$message({
               showClose: true,
@@ -392,7 +390,6 @@
           setTimeout(() => {
             this.listLoading = false
           }, 1.5 * 1000)
-          console.log(response)
           if (response) {
             this.$message({
               showClose: true,

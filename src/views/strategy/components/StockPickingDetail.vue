@@ -270,7 +270,8 @@ export default {
         commission: undefined,
         startTime: formatDate(start, 'yyyy-MM-dd'),
         strategy: undefined,
-        ts_code_list: []
+        ts_code_list: [],
+        name_list: []
       },
       dynamicTags: [],
       inputVisible: false,
@@ -351,8 +352,14 @@ export default {
           this.stockPickingForm = Object.assign({}, response)
           if (this.stockPickingForm.method === 'factor') {
             this.factorForm = Object.assign({}, this.stockPickingForm.filter)
-          } else if (this.stockPickingForm.method === 'factor') {
+          } else if (this.stockPickingForm.method === 'strategy') {
             this.strategyForm = Object.assign({}, this.stockPickingForm.filter)
+            for (var i = 0; i < this.strategyForm.ts_code_list.length; i++) {
+              this.dynamicTags.push({
+                'ts_code': this.strategyForm.ts_code_list[i],
+                'name': this.strategyForm.name_list[i]
+              })
+            }
           }
           this.updateState()
         })
@@ -363,6 +370,7 @@ export default {
         this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
         factorFilter(this.factorForm)
           .then(response => {
+            console.log(response)
             this.$message.success('Filtered successfully!')
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             this.$refs.compositionDetail.updateState()
@@ -372,6 +380,7 @@ export default {
         this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
         strategyFilter(this.strategyForm)
           .then(response => {
+            console.log(response)
             this.$message.success('Filtered successfully!')
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             this.$refs.compositionDetail.updateState()
@@ -467,7 +476,6 @@ export default {
                 }
               )
           } else {
-            console.log(this.stockPickingForm)
             createItem(this.stockPickingForm)
               .then(
                 response => {
@@ -528,6 +536,8 @@ export default {
     },
     handleClose(tag) {
       this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
+      this.strategyForm.ts_code_list.splice(this.dynamicTags.indexOf(tag), 1)
+      this.strategyForm.name_list.splice(this.dynamicTags.indexOf(tag), 1)
     },
     handleSelect(item) {
       const inputValue = this.inputValue
@@ -549,6 +559,7 @@ export default {
           'name': item.name
         })
         this.strategyForm.ts_code_list.push(item.ts_code)
+        this.strategyForm.name_list.push(item.name)
         this.inputVisible = false
         this.inputValue = ''
       }

@@ -79,12 +79,21 @@ import { fetchList } from '@/api/datasets'
 
 const defaultForm = {
   id: undefined,
-  title: 'myStrategy',
+  title: 'MyStrategy',
   code:
 `import backtrader as bt
+from back_test.strategyFilter import dailyHold
 class MyStrategy(bt.Strategy):
+
+    def __init__(self):
+        #To do
+
+    @dailyHold
     def next(self):
-        #计算截面收益率`
+        #To do
+
+    def log(self, txt, dt=None,doprint=False):
+        #To do`
 }
 
 export default {

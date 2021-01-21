@@ -6,7 +6,7 @@
           <svg-icon icon-class="left-arrow" class="icon-left-arrow" />
         </div>
       </el-form-item>
-      <el-form-item label="">
+      <el-form-item>
         <el-tag
           v-for="tag in dynamicTags"
           :key="tag.ts_code"
@@ -22,7 +22,7 @@
           v-model="inputValue"
           :fetch-suggestions="querySearchAsync"
           placeholder="请输入内容"
-          size="small"
+          size="mini"
           style="width: 180px;"
           @select="handleSelect($event)"
         ></el-autocomplete>
@@ -100,15 +100,6 @@ export default {
     prev() {
       this.$router.go(-1)
     },
-    handleClose(tag) {
-      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
-    },
-    showInput() {
-      this.inputVisible = true
-      this.$nextTick(_ => {
-        this.$refs.saveTagInput.$refs.input.focus()
-      })
-    },
     querySearchAsync(queryString, cb) {
       var companies = this.companies
       var results = queryString ? companies.filter(this.createContainsFilter(queryString)) : companies
@@ -121,6 +112,26 @@ export default {
       return (company) => {
         return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
       }
+    },
+    getAllCompanies() {
+      this.listLoading = true
+      fetchAllCompanies().then(response => {
+        this.listLoading = false
+        this.companies = []
+        for (const item of response) {
+          this.companies.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+    },
+    handleClose(tag) {
+      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
     },
     handleSelect(item) {
       const inputValue = this.inputValue
@@ -159,21 +170,10 @@ export default {
         }
       }
     },
-    getAllCompanies() {
-      this.listLoading = true
-      fetchAllCompanies().then(response => {
-        this.listLoading = false
-        this.companies = []
-        for (const item of response) {
-          this.companies.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+    showInput() {
+      this.inputVisible = true
+      this.$nextTick(_ => {
+        this.$refs.saveTagInput.$refs.input.focus()
       })
     }
   }

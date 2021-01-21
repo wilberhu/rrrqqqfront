@@ -12,7 +12,7 @@
             <el-input type="number" v-model="compositionForm.allfund" placeholder="请输入内容"></el-input>
           </el-form-item>
           <el-form-item label="手续费" label-width="120px">
-            <el-input type="number" :step="0.0001" min="0" max="0.1" v-model="compositionForm.comission" placeholder="eg: 0.0005"></el-input>
+            <el-input type="number" :step="0.0001" min="0" max="0.1" v-model="compositionForm.commission" placeholder="eg: 0.0005"></el-input>
           </el-form-item>
           <el-timeline :reverse="false">
             <el-timeline-item
@@ -189,7 +189,7 @@ export default {
         name: undefined,
         description: undefined,
         allfund: 100000,
-        comission: 0,
+        commission: 0,
         activities: []
       },
       activityForm: {

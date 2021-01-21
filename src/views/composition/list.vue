@@ -36,9 +36,9 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="stock" sortable label="Stock">
+      <el-table-column align="center" prop="allfund" sortable label="Allfund">
         <template slot-scope="scope">
-          <span>{{ scope.row.stock }}</span>
+          <span>{{ scope.row.allfund }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="modified" sortable label="Modified">

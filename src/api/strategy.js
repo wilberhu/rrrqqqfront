@@ -8,6 +8,14 @@ export function fetchList(query) {
   })
 }
 
+export function fetchAllList(query) {
+  return request({
+    url: '/api/strategies/all/',
+    method: 'get',
+    params: query
+  })
+}
+
 export function fetchItem(id) {
   return request({
     url: '/api/strategies/' + id + '/',
@@ -52,6 +60,14 @@ export function fetchStrategyCompare(code) {
     data: {
       code
     }
+  })
+}
+
+export function factorFilter(data) {
+  return request({
+    url: '/api/factor_filter/',
+    method: 'post',
+    data
   })
 }
 

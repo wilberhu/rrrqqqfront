@@ -2,15 +2,7 @@ import request from '@/utils/request'
 
 export function fetchList(query) {
   return request({
-    url: '/api/filter_options/',
-    method: 'get',
-    params: query
-  })
-}
-
-export function fetchAllList(query) {
-  return request({
-    url: '/api/filter_options/all/',
+    url: '/api/stock_pickings/',
     method: 'get',
     params: query
   })
@@ -18,14 +10,14 @@ export function fetchAllList(query) {
 
 export function fetchItem(id) {
   return request({
-    url: '/api/filter_options/' + id + '/',
+    url: '/api/stock_pickings/' + id + '/',
     method: 'get'
   })
 }
 
 export function createItem(data) {
   return request({
-    url: '/api/filter_options/',
+    url: '/api/stock_pickings/',
     method: 'post',
     data
   })
@@ -33,7 +25,7 @@ export function createItem(data) {
 
 export function updateItem(id, data) {
   return request({
-    url: '/api/filter_options/' + id + '/',
+    url: '/api/stock_pickings/' + id + '/',
     method: 'put',
     data
   })
@@ -41,7 +33,7 @@ export function updateItem(id, data) {
 
 export function deleteItem(id) {
   return request({
-    url: '/api/filter_options/' + id + '/',
+    url: '/api/stock_pickings/' + id + '/',
     method: 'delete'
   })
 }

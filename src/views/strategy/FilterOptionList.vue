@@ -152,8 +152,8 @@ export default {
       },
       tableOptions: [
         {
-          key: 'fina_indicators',
-          label: 'fina_indicators'
+          key: 'tush_fina_indicators',
+          label: 'tush_fina_indicators'
         }
       ],
       methodOptions: [

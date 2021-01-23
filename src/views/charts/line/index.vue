@@ -23,7 +23,7 @@
 <script>
 import Chart from '@/components/Charts/lineMarker'
 import { getHistData } from '@/api/histData'
-import { fetchAllCompanies } from '@/api/basic'
+import { fetchAllCompanies } from '@/api/stockBasic'
 
 export default {
   name: 'LineChart',

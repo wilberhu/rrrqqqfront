@@ -171,7 +171,7 @@
 import { fetchItem, createItem, updateItem } from '@/api/stockPicking'
 import { fetchTradeCalender } from '@/api/composition'
 import { fetchAllList as fetchFilterOptionList } from '@/api/filterOption'
-import { fetchAllCompanies } from '@/api/basic'
+import { fetchAllCompanies } from '@/api/stockBasic'
 import CompositionDetail from '../../composition/components/CompositionDetail'
 import { fetchAllList as fetchStrategyList, factorFilter, strategyFilter } from '@/api/strategy'
 import { Message } from 'element-ui'
@@ -370,7 +370,6 @@ export default {
         this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
         factorFilter(this.factorForm)
           .then(response => {
-            console.log(response)
             this.$message.success('Filtered successfully!')
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             this.$refs.compositionDetail.updateState()
@@ -380,7 +379,6 @@ export default {
         this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
         strategyFilter(this.strategyForm)
           .then(response => {
-            console.log(response)
             this.$message.success('Filtered successfully!')
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             this.$refs.compositionDetail.updateState()

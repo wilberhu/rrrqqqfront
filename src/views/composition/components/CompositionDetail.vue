@@ -140,7 +140,7 @@
 </template>
 
 <script>
-import { fetchAllCompanies } from '@/api/basic'
+import { fetchAllCompanies } from '@/api/stockBasic'
 import { getHistData, fetchCompanyClose } from '@/api/histData'
 import { dailyTrader, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'

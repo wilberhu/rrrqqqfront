@@ -38,7 +38,7 @@
 <script>
 import Chart from '@/components/Charts/closeMarker'
 import { fetchCompanyClose } from '@/api/histData'
-import { fetchAllCompanies } from '@/api/basic'
+import { fetchAllCompanies } from '@/api/stockBasic'
 import { Message } from 'element-ui'
 
 export default {

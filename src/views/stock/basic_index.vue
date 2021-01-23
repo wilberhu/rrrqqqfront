@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import { fetchIndexList } from '@/api/basic'
+import { fetchIndexList } from '@/api/stockBasic'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 

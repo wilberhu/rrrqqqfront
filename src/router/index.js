@@ -75,27 +75,27 @@ export const constantRoutes = [
   {
     path: '/stock',
     component: Layout,
-    redirect: '/stock/table',
+    redirect: '/stock/basic',
     name: 'Stock',
     meta: { title: 'stock', icon: 'example' },
     children: [
       {
+        path: 'basic',
+        name: 'Basic',
+        component: () => import('@/views/stock/basic'),
+        meta: { title: 'basic', icon: 'table' }
+      },
+      {
         path: 'today',
         name: 'Today',
-        component: () => import('@/views/table/today'),
+        component: () => import('@/views/stock/today'),
         meta: { title: 'today', icon: 'table' }
       },
       {
         path: 'daily',
         name: 'Daily',
-        component: () => import('@/views/table/daily'),
+        component: () => import('@/views/stock/daily'),
         meta: { title: 'daily', icon: 'table' }
-      },
-      {
-        path: 'basic',
-        name: 'Basic',
-        component: () => import('@/views/table/basic'),
-        meta: { title: 'basic', icon: 'table' }
       }
     ]
   },

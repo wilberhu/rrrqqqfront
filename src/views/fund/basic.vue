@@ -80,12 +80,12 @@
 </template>
 
 <script>
-import { fetchCompanyList } from '@/api/basic'
+import { fetchCompanyList } from '@/api/stockBasic'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
-  name: 'BasicCompany',
+  name: 'BasicFund',
   components: {
     Pagination
   },

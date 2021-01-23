@@ -82,7 +82,7 @@ const defaultForm = {
   title: 'MyStrategy',
   code:
 `import backtrader as bt
-from back_test.strategyFilter import dailyHold
+from ifund.strategyFilter import dailyHold
 class MyStrategy(bt.Strategy):
 
     def __init__(self):

@@ -16,10 +16,10 @@
 
     <el-tabs v-model="activeName" @tab-click="handleTabClick">
       <el-tab-pane label="company" name="company">
-        <TodayCompany @company_multiple_selection="listenCompanySelection" :deleteSelection="delete_selection" />
+        <DailyBasicCompany @company_multiple_selection="listenCompanySelection" :deleteSelection="delete_selection" />
       </el-tab-pane>
       <el-tab-pane label="index" name="index">
-        <TodayIndex @index_multiple_selection="listenIndexSelection" :deleteSelection="delete_selection" />
+        <DailyBasicIndex @index_multiple_selection="listenIndexSelection" :deleteSelection="delete_selection" />
       </el-tab-pane>
     </el-tabs>
 
@@ -41,14 +41,14 @@
 
 <script>
 import { Message } from 'element-ui'
-import TodayCompany from './today_company'
-import TodayIndex from './today_index'
+import DailyBasicCompany from './daily_basic_company'
+import DailyBasicIndex from './daily_basic_index'
 
 export default {
-  name: 'Today',
+  name: 'DailyBasic',
   components: {
-    TodayCompany,
-    TodayIndex
+    DailyBasicCompany,
+    DailyBasicIndex
   },
   data() {
     return {

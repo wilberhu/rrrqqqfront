@@ -3,10 +3,11 @@ export default {
     dashboard: 'Dashboard',
 
     stock: 'Stock',
-    daily: 'Daily',
-    today: 'Today',
     basic: 'Basic',
-    market: 'Market',
+    daily: 'Daily',
+    daily_basic: 'Daily Basic',
+    fund: 'Fund',
+    nav: 'Nav',
     charts: 'Charts',
     line: 'Line',
     close: 'Close',
@@ -161,6 +162,7 @@ export default {
     confirm: 'Confirm',
 
     hist_data: 'hist_data',
+    nav_data: 'nav_data',
     company: {
       ts_code: 'ts_code',
       symbol: 'symbol',
@@ -193,7 +195,7 @@ export default {
       exp_date: 'exp_date'
     },
 
-    daily_company: {
+    daily_basic_company: {
       ts_code: 'ts_code',
       name: 'name',
       trade_date: 'trade_date',
@@ -213,7 +215,7 @@ export default {
       circ_mv: 'circ_mv'
     },
 
-    daily_index: {
+    daily_basic_index: {
       ts_code: 'ts_code',
       name: 'name',
       trade_date: 'trade_date',
@@ -229,7 +231,7 @@ export default {
       pb: 'pb'
     },
 
-    today_company: {
+    daily_company: {
       ts_code: 'ts_code',
       name: 'name',
       trade_date: 'trade_date',
@@ -244,7 +246,7 @@ export default {
       amount: 'amount'
     },
 
-    today_index: {
+    daily_index: {
       ts_code: 'ts_code',
       name: 'name',
       trade_date: 'trade_date',
@@ -257,6 +259,60 @@ export default {
       pct_chg: 'pct_chg',
       vol: 'vol',
       amount: 'amount'
+    },
+
+    basic_fund: {
+      ts_code: 'ts_code',
+      name: 'name',
+      management: 'management',
+      custodian: 'custodian',
+      fund_type: 'fund_type',
+      found_date: 'found_date',
+      due_date: 'due_date',
+      list_date: 'list_date',
+      issue_date: 'issue_date',
+      delist_date: 'delist_date',
+      issue_amount: 'issue_amount',
+      m_fee: 'm_fee',
+      c_fee: 'c_fee',
+      duration_year: 'duration_year',
+      p_value: 'p_value',
+      min_amount: 'min_amount',
+      exp_return: 'exp_return',
+      benchmark: 'benchmark',
+      status: 'status',
+      invest_type: 'invest_type',
+      type: 'type',
+      trustee: 'trustee',
+      purc_startdate: 'purc_startdate',
+      redm_startdate: 'redm_startdate',
+      market: 'market'
+    },
+    daily_fund: {
+      ts_code: 'ts_code',
+      name: 'name',
+      trade_date: 'trade_date',
+      open: 'open',
+      high: 'high',
+      low: 'low',
+      close: 'close',
+      pre_close: 'pre_close',
+      change: 'change',
+      pct_chg: 'pct_chg',
+      vol: 'vol',
+      amount: 'amount'
+    },
+    nav_fund: {
+      ts_code: 'ts_code',
+      name: 'name',
+      ann_date: 'ann_date',
+      end_date: 'end_date',
+      unit_nav: 'unit_nav',
+      accum_nav: 'accum_nav',
+      accum_div: 'accum_div',
+      net_asset: 'net_asset',
+      total_netasset: 'total_netasset',
+      adj_nav: 'adj_nav'
     }
   },
   example: {

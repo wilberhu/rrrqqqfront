@@ -3,9 +3,11 @@ export default {
     dashboard: '首页',
 
     stock: '股票',
-    today: '日线行情',
-    daily: '每日指标',
     basic: '基本信息',
+    daily: '日线行情',
+    daily_basic: '每日指标',
+    fund: '基金',
+    nav: '净值',
     charts: '图表',
     line: 'K线图',
     close: 'K线对比图',
@@ -160,6 +162,7 @@ export default {
     confirm: '确 定',
 
     hist_data: '日K线',
+    nav_data: '净值线',
     company: {
       ts_code: 'TS代码',
       symbol: '股票代码',
@@ -168,7 +171,7 @@ export default {
       industry: '所属行业',
       fullname: '股票全称',
       enname: '英文全称',
-      market: '市场类型 （主板/中小板/创业板）',
+      market: '市场类型（主板/中小板/创业板/科创板/CDR）',
       exchange: '交易所代码',
       curr_type: '交易货币',
       list_status: '上市状态： L上市 D退市 P暂停上市',
@@ -192,7 +195,7 @@ export default {
       exp_date: '终止日期'
     },
 
-    daily_company: {
+    daily_basic_company: {
       ts_code: 'TS股票代码',
       name: '股票名称',
       trade_date: '交易日期',
@@ -212,7 +215,7 @@ export default {
       circ_mv: '流通市值（万元）'
     },
 
-    daily_index: {
+    daily_basic_index: {
       ts_code: 'TS代码',
       name: '简称',
       trade_date: '交易日期',
@@ -228,7 +231,7 @@ export default {
       pb: '市净率'
     },
 
-    today_company: {
+    daily_company: {
       ts_code: '股票代码',
       name: '股票名称',
       trade_date: '交易日期',
@@ -243,7 +246,7 @@ export default {
       amount: '成交额（千元）'
     },
 
-    today_index: {
+    daily_index: {
       ts_code: 'TS指数代码',
       name: '简称',
       trade_date: '交易日',
@@ -256,6 +259,59 @@ export default {
       pct_chg: '涨跌幅（%）',
       vol: '成交量（手）',
       amount: '成交额（千元）'
+    },
+    basic_fund: {
+      ts_code: '基金代码',
+      name: '简称',
+      management: '管理人',
+      custodian: '托管人',
+      fund_type: '投资类型',
+      found_date: '成立日期',
+      due_date: '到期日期',
+      list_date: '上市时间',
+      issue_date: '发行日期',
+      delist_date: '退市日期',
+      issue_amount: '发行份额(亿)',
+      m_fee: '管理费',
+      c_fee: '托管费',
+      duration_year: '存续期',
+      p_value: '面值',
+      min_amount: '起点金额(万元)',
+      exp_return: '预期收益率',
+      benchmark: '业绩比较基准',
+      status: '存续状态',
+      invest_type: '投资风格',
+      type: '基金类型',
+      trustee: '受托人',
+      purc_startdate: '日常申购起始日',
+      redm_startdate: '日常赎回起始日',
+      market: 'E场内O场外'
+    },
+    daily_fund: {
+      ts_code: '基金代码',
+      name: '简称',
+      trade_date: '交易日期',
+      open: '开盘价(元)',
+      high: '最高价(元)',
+      low: '最低价(元)',
+      close: '收盘价(元)',
+      pre_close: '昨收盘价(元)',
+      change: '涨跌额(元)',
+      pct_chg: '涨跌幅(%)',
+      vol: '成交量(手)',
+      amount: '成交额(千元)'
+    },
+    nav_fund: {
+      ts_code: '基金代码',
+      name: '简称',
+      ann_date: '公告日期',
+      end_date: '截止日期',
+      unit_nav: '单位净值',
+      accum_nav: '累计净值',
+      accum_div: '累计分红',
+      net_asset: '资产净值',
+      total_netasset: '合计资产净值',
+      adj_nav: '复权单位净值'
     }
   },
   example: {

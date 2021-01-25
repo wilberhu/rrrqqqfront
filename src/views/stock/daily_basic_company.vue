@@ -16,88 +16,93 @@
       border
       fit
       highlight-current-row
-      class="table"
       @sort-change="sortChange"
       @selection-change="handleSelectionChange">
       <el-table-column fixed :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
-      <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.today_index.ts_code')" :class-name="getSortClass('ts_code')" width="110">
+      <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.daily_basic_company.ts_code')" :class-name="getSortClass('ts_code')" width="110">
         <template slot-scope="scope">
           <!--{{ scope.$index }}-->
           {{ scope.row.ts_code }}
         </template>
       </el-table-column>
-      <el-table-column sortable fixed prop="name" :label="$t('table.today_index.name')" :class-name="getSortClass('name')">
+      <el-table-column sortable fixed prop="name" :label="$t('table.daily_basic_company.name')" :class-name="getSortClass('name')">
         <template slot-scope="scope">
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <!--      <el-table-column sortable prop="trade_date" :label="$t('table.trade_date')">-->
-      <!--        <template slot-scope="scope">-->
-      <!--          <span>{{ scope.row.trade_date }}</span>-->
-      <!--        </template>-->
-      <!--      </el-table-column>-->
-      <el-table-column sortable prop="close" :label="$t('table.today_index.close')">
+<!--      <el-table-column sortable prop="trade_date" :label="$t('table.trade_date')">-->
+<!--        <template slot-scope="scope">-->
+<!--          <span>{{ scope.row.trade_date }}</span>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
+      <el-table-column sortable prop="close" :label="$t('table.daily_basic_company.close')">
         <template slot-scope="scope">
           <span>{{ scope.row.close }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="open" :label="$t('table.today_index.open')">
+      <el-table-column sortable prop="turnover_rate" :label="$t('table.daily_basic_company.turnover_rate')">
         <template slot-scope="scope">
-          <span>{{ scope.row.open }}</span>
+          <span>{{ scope.row.turnover_rate }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="high" :label="$t('table.today_index.high')">
+      <el-table-column sortable prop="turnover_rate_f" :label="$t('table.daily_basic_company.turnover_rate_f')">
         <template slot-scope="scope">
-          <span>{{ scope.row.high }}</span>
+          <span>{{ scope.row.turnover_rate_f }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="low" :label="$t('table.today_index.low')">
+      <el-table-column sortable prop="volume_ratio" :label="$t('table.daily_basic_company.volume_ratio')">
         <template slot-scope="scope">
-          <span>{{ scope.row.low }}</span>
+          <span>{{ scope.row.volume_ratio }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="pre_close" :label="$t('table.today_index.pre_close')">
+      <el-table-column sortable prop="pe" :label="$t('table.daily_basic_company.pe')">
         <template slot-scope="scope">
-          <span>{{ scope.row.pre_close }}</span>
+          <span>{{ scope.row.pe }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="change" :label="$t('table.today_index.change')">
+      <el-table-column sortable prop="pe_ttm" :label="$t('table.daily_basic_company.pe_ttm')">
         <template slot-scope="scope">
-          <template v-if="scope.row.change > 0">
-            <span style="color: red">{{ scope.row.change | numFilter }} ↑</span>
-          </template>
-          <template v-else-if="scope.row.change < 0">
-            <span style="color: green">{{ scope.row.change | numFilter }} ↓</span>
-          </template>
-          <template v-else>
-            <span>{{ scope.row.change | numFilter }}</span>
-          </template>
+          <span>{{ scope.row.pe_ttm }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="pct_chg" :label="$t('table.today_index.pct_chg')">
+      <el-table-column sortable prop="pb" :label="$t('table.daily_basic_company.pb')">
         <template slot-scope="scope">
-          <template v-if="scope.row.pct_chg > 0">
-            <span style="color: red">{{ scope.row.pct_chg | numFilter }}% ↑</span>
-          </template>
-          <template v-else-if="scope.row.pct_chg < 0">
-            <span style="color: green">{{ scope.row.pct_chg | numFilter }}% ↓</span>
-          </template>
-          <template v-else>
-            <span>{{ scope.row.change | numFilter }}</span>
-          </template>
+          <span>{{ scope.row.pb }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="vol" :label="$t('table.today_index.vol')">
+      <el-table-column sortable prop="ps" :label="$t('table.daily_basic_company.ps')">
         <template slot-scope="scope">
-          <span>{{ scope.row.vol }}</span>
+          <span>{{ scope.row.ps }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="amount" :label="$t('table.today_index.amount')">
+      <el-table-column sortable prop="ps_ttm" :label="$t('table.daily_basic_company.ps_ttm')">
         <template slot-scope="scope">
-          <span>{{ scope.row.amount }}</span>
+          <span>{{ scope.row.ps_ttm }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column sortable prop="total_share" :label="$t('table.daily_basic_company.total_share')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.total_share }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column sortable prop="float_share" :label="$t('table.daily_basic_company.float_share')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.float_share }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column sortable prop="free_share" :label="$t('table.daily_basic_company.free_share')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.free_share }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column sortable prop="total_mv" :label="$t('table.daily_basic_company.total_mv')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.total_mv }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column sortable prop="circ_mv" :label="$t('table.daily_basic_company.circ_mv')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.circ_mv }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="hist_data" :label="$t('table.hist_data')">
@@ -107,29 +112,21 @@
       </el-table-column>
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="page" :limit.sync="listQuery.limit" @pagination="getList" />
+
   </div>
 </template>
 
 <script>
-import { fetchIndexList } from '@/api/stockDaily'
+import { fetchCompanyList } from '@/api/stockDailyBasic'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
-  name: 'TodayIndex',
-  components: { Pagination },
-  directives: { waves },
-  filters: {
-    numFilter(value) {
-      // 截取当前数据到小数点后两位
-      var realVal = parseFloat(value).toFixed(2)
-      if (isNaN(realVal)) {
-        return ''
-      }
-      // num.toFixed(2)获取的是字符串
-      return parseFloat(realVal)
-    }
+  name: 'DailyBasicCompany',
+  components: {
+    Pagination
   },
+  directives: { waves },
   props: {
     deleteSelection: {
       type: String,
@@ -138,11 +135,12 @@ export default {
   },
   data() {
     return {
-      tableKey: 1,
+      tableKey: 0,
       list: [],
       total: 0,
       listLoading: true,
       page: 1,
+
       listQuery: {
         limit: 20,
         offset: undefined,
@@ -188,7 +186,7 @@ export default {
     getList() {
       this.listQuery.offset = this.offset
       this.listLoading = true
-      fetchIndexList(this.listQuery).then(response => {
+      fetchCompanyList(this.listQuery).then(response => {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
@@ -219,7 +217,7 @@ export default {
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows
-      this.$emit('index_multiple_selection', this.multipleSelection)
+      this.$emit('company_multiple_selection', this.multipleSelection)
     },
     getSortClass: function(key) {
       const sort = this.listQuery.ordering

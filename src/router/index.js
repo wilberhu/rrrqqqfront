@@ -81,21 +81,48 @@ export const constantRoutes = [
     children: [
       {
         path: 'basic',
-        name: 'Basic',
+        name: 'StockBasic',
         component: () => import('@/views/stock/basic'),
         meta: { title: 'basic', icon: 'table' }
       },
       {
-        path: 'today',
-        name: 'Today',
-        component: () => import('@/views/stock/today'),
-        meta: { title: 'today', icon: 'table' }
+        path: 'daily',
+        name: 'StockDaily',
+        component: () => import('@/views/stock/daily'),
+        meta: { title: 'daily', icon: 'table' }
+      },
+      {
+        path: 'daily_basic',
+        name: 'StockDailyBasic',
+        component: () => import('@/views/stock/daily_basic'),
+        meta: { title: 'daily_basic', icon: 'table' }
+      }
+    ]
+  },
+  {
+    path: '/fund',
+    component: Layout,
+    redirect: '/fund/basic',
+    name: 'Fund',
+    meta: { title: 'fund', icon: 'example' },
+    children: [
+      {
+        path: 'basic',
+        name: 'FundBasic',
+        component: () => import('@/views/fund/basic'),
+        meta: { title: 'basic', icon: 'table' }
       },
       {
         path: 'daily',
-        name: 'Daily',
-        component: () => import('@/views/stock/daily'),
+        name: 'FundDaily',
+        component: () => import('@/views/fund/daily'),
         meta: { title: 'daily', icon: 'table' }
+      },
+      {
+        path: 'nav',
+        name: 'FundNav',
+        component: () => import('@/views/fund/nav'),
+        meta: { title: 'nav', icon: 'table' }
       }
     ]
   },
@@ -182,20 +209,6 @@ export const constantRoutes = [
         component: () => import('@/views/strategy/EditStockPicking'),
         name: 'EditStockPicking',
         meta: { title: 'edit_stock_picking', noCache: true },
-        hidden: true
-      },
-      {
-        path: 'result',
-        component: () => import('@/views/strategy/result'),
-        name: 'StrategyResult',
-        meta: { title: 'strategy_result' },
-        hidden: true
-      },
-      {
-        path: 'strategy_compare',
-        component: () => import('@/views/charts/strategy_compare/index'),
-        name: 'StrategyCompareChart',
-        meta: { title: 'strategy_compare' },
         hidden: true
       }
     ]

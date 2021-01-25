@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="tab-container">
     <div class="filter-container">
       <el-input placeholder="ts_code" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch"/>
       <!-- <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleSearch">
@@ -19,89 +19,60 @@
       @sort-change="sortChange"
       @selection-change="handleSelectionChange">
       <el-table-column fixed :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
-      <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.today_company.ts_code')" :class-name="getSortClass('ts_code')" width="110">
+      <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.nav_fund.ts_code')" :class-name="getSortClass('ts_code')" width="110">
         <template slot-scope="scope">
           <!--{{ scope.$index }}-->
           {{ scope.row.ts_code }}
         </template>
       </el-table-column>
-      <el-table-column sortable fixed prop="name" :label="$t('table.today_company.name')" :class-name="getSortClass('name')">
+      <el-table-column sortable fixed prop="name" :label="$t('table.nav_fund.name')" :class-name="getSortClass('name')">
         <template slot-scope="scope">
           {{ scope.row.name }}
         </template>
       </el-table-column>
-<!--      <el-table-column sortable prop="trade_date" :label="$t('table.trade_date')">-->
-<!--        <template slot-scope="scope">-->
-<!--          <span>{{ scope.row.trade_date }}</span>-->
-<!--        </template>-->
-<!--      </el-table-column>-->
-      <el-table-column sortable prop="close" :label="$t('table.today_company.close')">
+      <el-table-column sortable prop="ann_date" :label="$t('table.nav_fund.ann_date')">
         <template slot-scope="scope">
-          <span>{{ scope.row.close }}</span>
+          <span>{{ scope.row.ann_date }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="open" :label="$t('table.today_company.open')">
+      <el-table-column sortable prop="end_date" :label="$t('table.nav_fund.end_date')">
         <template slot-scope="scope">
-          <span>{{ scope.row.open }}</span>
+          <span>{{ scope.row.end_date }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="high" :label="$t('table.today_company.high')">
+      <el-table-column sortable prop="unit_nav" :label="$t('table.nav_fund.unit_nav')">
         <template slot-scope="scope">
-          <span>{{ scope.row.high }}</span>
+          <span>{{ scope.row.unit_nav }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="low" :label="$t('table.today_company.low')">
+      <el-table-column sortable prop="accum_nav" :label="$t('table.nav_fund.accum_nav')">
         <template slot-scope="scope">
-          <span>{{ scope.row.low }}</span>
+          <span>{{ scope.row.accum_nav }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="pre_close" :label="$t('table.today_company.pre_close')">
+      <el-table-column sortable prop="accum_div" :label="$t('table.nav_fund.accum_div')">
         <template slot-scope="scope">
-          <span>{{ scope.row.pre_close }}</span>
+          <span>{{ scope.row.accum_div }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="change" :label="$t('table.today_company.change')">
+      <el-table-column sortable prop="net_asset" :label="$t('table.nav_fund.net_asset')">
         <template slot-scope="scope">
-          <template v-if="scope.row.change > 0">
-            <span style="color: red">{{ scope.row.change | numFilter }} ↑</span>
-          </template>
-          <template v-else-if="scope.row.change < 0">
-            <span style="color: green">{{ scope.row.change | numFilter }} ↓</span>
-          </template>
-          <template v-else>
-            <span>{{ scope.row.change | numFilter }}</span>
-          </template>
+          <span>{{ scope.row.net_asset }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="pct_chg" :label="$t('table.today_company.pct_chg')">
+      <el-table-column sortable prop="total_netasset" :label="$t('table.nav_fund.total_netasset')">
         <template slot-scope="scope">
-          <template v-if="scope.row.pct_chg > 0">
-            <span style="color: red">{{ scope.row.pct_chg | numFilter }}% ↑</span>
-          </template>
-          <template v-else-if="scope.row.pct_chg < 0">
-            <span style="color: green">{{ scope.row.pct_chg | numFilter }}% ↓</span>
-          </template>
-          <template v-else>
-            <span>{{ scope.row.change | numFilter }}</span>
-          </template>
+          <span>{{ scope.row.total_netasset }}</span>
         </template>
       </el-table-column>
-
-      <el-table-column sortable prop="vol" :label="$t('table.today_company.vol')">
+      <el-table-column sortable prop="adj_nav" :label="$t('table.nav_fund.adj_nav')">
         <template slot-scope="scope">
-          <span>{{ scope.row.vol }}</span>
+          <span>{{ scope.row.adj_nav }}</span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="amount" :label="$t('table.today_company.amount')">
+      <el-table-column prop="nav_data" :label="$t('table.nav_data')">
         <template slot-scope="scope">
-          <span>{{ scope.row.amount }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="hist_data" :label="$t('table.hist_data')">
-        <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
+          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.nav_data') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -111,7 +82,7 @@
 </template>
 
 <script>
-import { fetchCompanyList } from '@/api/stockDaily'
+import { fetchList } from '@/api/fundNav'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
@@ -191,7 +162,7 @@ export default {
     getList() {
       this.listQuery.offset = this.offset
       this.listLoading = true
-      fetchCompanyList(this.listQuery).then(response => {
+      fetchList(this.listQuery).then(response => {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
@@ -235,3 +206,9 @@ export default {
   }
 }
 </script>
+
+<style>
+  .tab-container {
+    margin: 20px;
+  }
+</style>

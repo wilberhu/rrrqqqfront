@@ -147,6 +147,12 @@ export const constantRoutes = [
         component: () => import('@/views/charts/close/index'),
         name: 'CloseChart',
         meta: { title: 'close' }
+      },
+      {
+        path: 'nav',
+        component: () => import('@/views/charts/nav/index'),
+        name: 'NavChart',
+        meta: { title: 'nav' }
       }
     ]
   },

@@ -112,7 +112,17 @@
       </el-table-column>
       <el-table-column sortable prop="benchmark" :label="$t('table.basic_fund.benchmark')" :class-name="getSortClass('benchmark')">
         <template slot-scope="scope">
-          {{ scope.row.benchmark }}
+          <el-popover
+            placement="bottom"
+            :title="scope.row.name + ' - ' + $t('table.basic_fund.benchmark')"
+            width="400"
+            trigger="click"
+            :content="scope.row.benchmark">
+            <a slot="reference" v-if="scope.row.benchmark">
+              {{ scope.row.benchmark.slice(0,10) }}
+              <span v-if="scope.row.benchmark.length > 10">...</span>
+            </a>
+          </el-popover>
         </template>
       </el-table-column>
       <el-table-column sortable prop="status" :label="$t('table.basic_fund.status')" :class-name="getSortClass('status')">
@@ -238,11 +248,16 @@ export default {
   },
   methods: {
     drawLine(item) {
+      const multipleSelection = []
+      multipleSelection.push({
+        ts_code: item.ts_code,
+        name: item.name,
+        type: 'fund'
+      })
       this.$router.push({
         name: 'NavChart',
         params: {
-          ts_code: item.ts_code,
-          name: item.name
+          codes: multipleSelection
         }
       })
     },

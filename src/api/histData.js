@@ -8,13 +8,20 @@ export function getHistData(ts_code, params) {
   })
 }
 
-export function fetchCompanyClose(ts_code, column='close', params) {
+export function fetchCompanyClose(data, column='close', params) {
   return request({
     url: '/api/data/' + column + '/',
     method: 'post',
     params,
-    data: {
-      ts_code
-    }
+    data
+  })
+}
+
+export function fetchFundNav(data, column='unit_nav', params) {
+  return request({
+    url: '/api/funds/' + column + '/',
+    method: 'post',
+    params,
+    data
   })
 }

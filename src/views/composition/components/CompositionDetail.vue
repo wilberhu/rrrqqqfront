@@ -467,14 +467,18 @@ export default {
           date__lte: activityForm.timestamp,
           date__gte: activityForm.timestamp
         }
-        let ts_code_list_string = ''
+        let data = {
+          ts_code_list: [],
+          type_list: []
+        }
         for (const item of activityForm.companies) {
           if (item.ts_code) {
-            ts_code_list_string += item.ts_code + ','
+            data.ts_code_list.push(item.ts_code)
+            data.type_list.push('company')
           }
         }
-        if (ts_code_list_string !== '') {
-          fetchCompanyClose(ts_code_list_string, 'open', queryParams).then(response => {
+        if ( data.ts_code_list.length > 0) {
+          fetchCompanyClose(data, 'open', queryParams).then(response => {
             if (response.close_data[0]) {
               for (let i = 0; i < activityForm.companies.length; i++) {
                 for (let j = 0; j < response.ts_code_list.length; j++) {

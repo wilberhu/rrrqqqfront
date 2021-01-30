@@ -42,11 +42,12 @@ export default {
   computed: {
     series() {
       var ret = []
+      var type_list = Array.from(new Set(this.form.type_list))
       for (var i = 0; i < this.form.ts_code_list.length; i++) {
         ret.push({
           name: this.form.name_list[i],
           type: 'line',
-          yAxisIndex: this.form.type_list[i],
+          yAxisIndex: type_list.indexOf(this.form.type_list[i]),
           animation: false,
           lineStyle: {
             width: 1
@@ -73,6 +74,8 @@ export default {
       this.initChart()
     },
     initChart: function() {
+      var type_list = Array.from(new Set(this.form.type_list))
+
       this.chart = echarts.init(document.getElementById(this.id))
 
       this.chart.setOption({
@@ -133,12 +136,12 @@ export default {
         ],
         yAxis: [
           {
-            name: '股票',
+            name: type_list[0],
             type: 'value',
             scale: true
           },
           {
-            name: '大盘',
+            name: type_list[1],
             type: 'value',
             scale: true
           }

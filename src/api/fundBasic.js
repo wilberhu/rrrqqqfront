@@ -7,3 +7,11 @@ export function fetchList(params) {
     params
   })
 }
+
+export function fetchAllList(params) {
+  return request({
+    url: '/api/funds_basic/all/',
+    method: 'get',
+    params
+  })
+}

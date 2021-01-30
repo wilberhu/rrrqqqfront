@@ -22,3 +22,10 @@ export function fetchIndexList(params) {
     params
   })
 }
+
+export function fetchAllIndexes() {
+  return request({
+    url: '/api/indexes/all/',
+    method: 'get'
+  })
+}

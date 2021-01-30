@@ -6,7 +6,7 @@
           <svg-icon icon-class="left-arrow" class="icon-left-arrow" />
         </div>
       </el-form-item>
-      <el-form-item>
+      <el-form-item v-show="false">
         <el-checkbox-group
           v-model="typeList"
           :min="1"
@@ -14,49 +14,27 @@
           <el-checkbox v-for="item in typeOptions" :label="item" :key="item">{{item}}</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
-      <el-form-item v-if="typeList.indexOf('company')>-1" :inline="true" label="company" label-width="80px">
+      <el-form-item v-if="typeList.indexOf('fund')>-1" :inline="true" label="fund" label-width="80px">
         <el-tag
-          v-for="tag in dynamicTags.company"
+          v-for="tag in dynamicTags.fund"
           :key="tag.ts_code"
           :disable-transitions="false"
           closable
-          @close="handleClose(tag, 'company')"
+          @close="handleClose(tag, 'fund')"
         >
           {{ tag.ts_code }} {{ tag.name }}
         </el-tag>
         <el-autocomplete
-          v-if="inputVisible.company"
-          ref="saveTagInputCompany"
-          v-model="inputValue.company"
-          :fetch-suggestions="((queryString,cb)=>{querySearchAsync(queryString,cb,'company')})"
+          v-if="inputVisible.fund"
+          ref="saveTagInputFund"
+          v-model="inputValue.fund"
+          :fetch-suggestions="((queryString,cb)=>{querySearchAsync(queryString,cb,'fund')})"
           placeholder="请输入内容"
           size="mini"
-          style="width: 180px;"
-          @select="handleSelect($event, 'company')"
+          style="width: 300px;"
+          @select="handleSelect($event, 'fund')"
         ></el-autocomplete>
-        <el-button v-else size="mini" @click="showInput('company')">+ New Tag</el-button>
-      </el-form-item>
-      <el-form-item v-if="typeList.indexOf('index')>-1" :inline="true" label="index" label-width="80px">
-        <el-tag
-          v-for="tag in dynamicTags.index"
-          :key="tag.ts_code"
-          :disable-transitions="false"
-          closable
-          @close="handleClose(tag, 'index')"
-        >
-          {{ tag.ts_code }} {{ tag.name }}
-        </el-tag>
-        <el-autocomplete
-          v-if="inputVisible.index"
-          ref="saveTagInputIndex"
-          v-model="inputValue.index"
-          :fetch-suggestions="((queryString,cb)=>{querySearchAsync(queryString,cb,'index')})"
-          placeholder="请输入内容"
-          size="mini"
-          style="width: 180px;"
-          @select="handleSelect($event, 'index')"
-        ></el-autocomplete>
-        <el-button v-else size="mini" @click="showInput('index')">+ New Tag</el-button>
+        <el-button v-else size="mini" @click="showInput('fund')">+ New Tag</el-button>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" size="mini" @click="drawCharts">submit</el-button>
@@ -68,19 +46,19 @@
 
 <script>
 import Chart from '@/components/Charts/closeMarker'
-import { fetchCompanyClose } from '@/api/histData'
+import { fetchFundNav } from '@/api/histData'
 import { fetchAllCompanies, fetchAllIndexes } from '@/api/stockBasic'
 import { fetchAllList as fetchAllFunds } from '@/api/fundBasic'
 import { Message } from 'element-ui'
 
 export default {
-  name: 'CloseChart',
+  name: 'NavChart',
   components: { Chart },
   data() {
     return {
       listLoading: true,
-      typeOptions: ['company', 'index'],
-      typeList: ['company'],
+      typeOptions: ['fund'],
+      typeList: ['fund'],
       datalist: {
         company: [],
         index: [],
@@ -114,8 +92,7 @@ export default {
     }
   },
   mounted() {
-    this.getAllCompanies()
-    this.getAllIndexes()
+    this.getAllFunds()
   },
   activated() {
     if (this.$route.params.codes) {
@@ -152,7 +129,7 @@ export default {
           data.type_list.push(key)
         }
       }
-      fetchCompanyClose(data).then(response => {
+      fetchFundNav(data).then(response => {
         this.form.ts_code_list = response.ts_code_list
         this.form.name_list = response.name_list
         this.form.type_list = response.type_list

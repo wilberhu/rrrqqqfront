@@ -151,11 +151,16 @@ export default {
   },
   methods: {
     drawLine(item) {
+      const multipleSelection = []
+      multipleSelection.push({
+        ts_code: item.ts_code,
+        name: item.name,
+        type: 'fund'
+      })
       this.$router.push({
-        name: 'LineChart',
+        name: 'NavChart',
         params: {
-          ts_code: item.ts_code,
-          name: item.name
+          codes: multipleSelection
         }
       })
     },

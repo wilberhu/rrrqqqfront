@@ -96,13 +96,15 @@ export default {
       for (let i = 0; i < this.company_selection.length; i++) {
         this.multipleSelection.push({
           ts_code: this.company_selection[i].ts_code,
-          name: this.company_selection[i].name
+          name: this.company_selection[i].name,
+          type: 'company'
         })
       }
       for (let i = 0; i < this.index_selection.length; i++) {
         this.multipleSelection.push({
           ts_code: this.index_selection[i].ts_code,
-          name: this.index_selection[i].name
+          name: this.index_selection[i].name,
+          type: 'index'
         })
       }
       this.multipleSelection.sort(this.compare('ts_code'))

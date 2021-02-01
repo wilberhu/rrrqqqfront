@@ -1,8 +1,24 @@
 import request from '@/utils/request'
 
-export function getHistData(ts_code, params) {
+export function getCompanyHistData(ts_code, params) {
   return request({
-    url: '/api/item_hist_data/' + ts_code,
+    url: '/api/companies/hist_data/' + ts_code,
+    method: 'get',
+    params
+  })
+}
+
+export function getIndexHistData(ts_code, params) {
+  return request({
+    url: '/api/indexes/hist_data/' + ts_code,
+    method: 'get',
+    params
+  })
+}
+
+export function getFundHistData(ts_code, params) {
+  return request({
+    url: '/api/funds_basic/hist_data/' + ts_code,
     method: 'get',
     params
   })

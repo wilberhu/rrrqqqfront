@@ -156,7 +156,8 @@ export default {
         name: 'LineChart',
         params: {
           ts_code: item.ts_code,
-          name: item.name
+          name: item.name,
+          type: 'index'
         }
       })
     },

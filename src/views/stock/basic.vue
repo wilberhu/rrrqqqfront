@@ -27,7 +27,10 @@
     <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
       <el-form label-width="100px">
         <el-form-item label="companies: ">
-          <el-tag v-for="tag in multipleSelection" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in inCompany" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        </el-form-item>
+        <el-form-item label="indexes: ">
+          <el-tag v-for="tag in inIndex" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
         </el-form-item>
       </el-form>
 
@@ -58,6 +61,14 @@ export default {
       company_selection: [],
       index_selection: [],
       delete_selection: undefined
+    }
+  },
+  computed: {
+    inCompany: function() {
+      return this.multipleSelection.filter(i => i.type === 'company')
+    },
+    inIndex: function() {
+      return this.multipleSelection.filter(i => i.type === 'index')
     }
   },
   created() {
@@ -124,7 +135,7 @@ export default {
       if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
         Message({
           // message: error.message,
-          message: 'The companies should be more than 0 and less than 10',
+          message: 'The selected items should be more than 0 and less than 10',
           type: 'error',
           duration: 5 * 1000
         })

@@ -58,6 +58,28 @@
         ></el-autocomplete>
         <el-button v-else size="mini" @click="showInput('index')">+ New Tag</el-button>
       </el-form-item>
+      <el-form-item v-if="typeList.indexOf('fund')>-1" :inline="true" label="fund" label-width="80px">
+        <el-tag
+          v-for="tag in dynamicTags.fund"
+          :key="tag.ts_code"
+          :disable-transitions="false"
+          closable
+          @close="handleClose(tag, 'fund')"
+        >
+          {{ tag.ts_code }} {{ tag.name }}
+        </el-tag>
+        <el-autocomplete
+          v-if="inputVisible.fund"
+          ref="saveTagInputFund"
+          v-model="inputValue.fund"
+          :fetch-suggestions="((queryString,cb)=>{querySearchAsync(queryString,cb,'fund')})"
+          placeholder="请输入内容"
+          size="mini"
+          style="width: 300px;"
+          @select="handleSelect($event, 'fund')"
+        ></el-autocomplete>
+        <el-button v-else size="mini" @click="showInput('fund')">+ New Tag</el-button>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" size="mini" @click="drawCharts">submit</el-button>
       </el-form-item>
@@ -116,6 +138,7 @@ export default {
   mounted() {
     this.getAllCompanies()
     this.getAllIndexes()
+    this.getAllFunds()
   },
   activated() {
     if (this.$route.params.codes) {

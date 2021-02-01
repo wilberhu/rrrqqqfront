@@ -96,12 +96,12 @@
       </el-table-column>
       <el-table-column prop="hist_data" :label="$t('table.hist_data')">
         <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
+          <el-button type="info" @click="drawHistLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
         </template>
       </el-table-column>
       <el-table-column prop="nav_data" :label="$t('table.nav_data')">
         <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.nav_data') }}</el-button>
+          <el-button type="info" @click="drawNavLine(scope.row)">{{ $t('table.nav_data') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -179,7 +179,23 @@ export default {
     this.getList()
   },
   methods: {
-    drawLine(item) {
+    drawHistLine(item) {
+      const multipleSelection = []
+      multipleSelection.push({
+        ts_code: item.ts_code,
+        name: item.name,
+        type: 'fund'
+      })
+      this.$router.push({
+        name: 'LineChart',
+        params: {
+          ts_code: item.ts_code,
+          name: item.name,
+          type: 'fund'
+        }
+      })
+    },
+    drawNavLine(item) {
       const multipleSelection = []
       multipleSelection.push({
         ts_code: item.ts_code,

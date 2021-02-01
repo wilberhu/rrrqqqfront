@@ -1,5 +1,16 @@
 <template>
   <div class="tab-container">
+    <vue-fab
+      :main-btn-color="'#2196F3'"
+      :fab-animate-bezier="'ease-out'"
+      :fab-auto-hide-animate-model="'alive'"
+      :scroll-auto-hide="false"
+      prop="open"
+      style="right: 13%; bottom: 15%"
+      icon="multiline_chart"
+      size="big"
+      fab-item-animate="alive"
+      @clickMainBtn="clickMainBtn"/>
     <div class="filter-container">
       <el-input placeholder="ts_code, name" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch"/>
       <!-- <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleSearch">
@@ -16,8 +27,18 @@
       border
       fit
       highlight-current-row
+      @expand-change="expandChange"
       @sort-change="sortChange"
       @selection-change="handleSelectionChange">
+      <el-table-column type="expand">
+        <template slot-scope="props">
+          <el-form label-position="left" inline class="demo-table-expand">
+            <el-form-item :label="$t('table.basic_fund.name')" >
+              <span>{{ props.row.name }}</span>
+            </el-form-item>
+          </el-form>
+        </template>
+      </el-table-column>
       <el-table-column fixed :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
       <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.basic_fund.ts_code')" :class-name="getSortClass('ts_code')" width="110">
         <template slot-scope="scope">
@@ -114,9 +135,9 @@
         <template slot-scope="scope">
           <el-popover
             placement="bottom"
-            :title="scope.row.name + ' - ' + $t('table.basic_fund.benchmark')"
+            :title="scope.row.name"
             width="400"
-            trigger="click"
+            trigger="hover"
             :content="scope.row.benchmark">
             <a slot="reference" v-if="scope.row.benchmark">
               {{ scope.row.benchmark.slice(0,10) }}
@@ -168,13 +189,27 @@
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="page" :limit.sync="listQuery.limit" @pagination="getList" />
 
+    <!-- MultiLine弹出框 -->
+    <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
+      <el-form label-width="100px">
+        <el-form-item label="funds: ">
+          <el-tag v-for="tag in multipleSelection" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="multiLineVisible = false">{{ $t('table.cancel') }}</el-button>
+        <el-button type="primary" @click="showCharts">Show Charts</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { fetchList } from '@/api/fundBasic'
 import waves from '@/directive/waves' // Waves directive
-import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+import Pagination from '@/components/Pagination'
+import {Message} from "element-ui"; // Secondary package based on el-pagination
 
 export default {
   name: 'BasicFund',
@@ -225,7 +260,8 @@ export default {
         { label: 'Name Ascending', key: 'name' },
         { label: 'Name Descending', key: '-name' }],
 
-      multipleSelection: []
+      multipleSelection: [],
+      multiLineVisible: false
     }
   },
   computed: {
@@ -233,20 +269,67 @@ export default {
       return (this.page - 1) * this.listQuery.limit
     }
   },
-  watch: {
-    deleteSelection() {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === this.deleteSelection) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
-    }
-  },
   created() {
     this.getList()
   },
   methods: {
+    // 定义排序规则
+    compare(pro) {
+      return function(obj1, obj2) {
+        var val1 = obj1[pro]
+        var val2 = obj2[pro]
+        if (val1 < val2) { // 升序
+          return -1
+        } else if (val1 > val2) {
+          return 1
+        } else {
+          return 0
+        }
+      }
+    },
+    listenSelection(data) {
+      this.company_selection = data
+    },
+    clickMainBtn() {
+      this.multipleSelection.sort(this.compare('ts_code'))
+      this.multiLineVisible = !this.multiLineVisible
+    },
+    closeTag(tag) {
+      for (let i = 0; i < this.multipleSelection.length; i++) {
+        if (this.multipleSelection[i].ts_code === tag.ts_code) {
+          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
+          break
+        }
+      }
+      this.multipleSelection.sort(this.compare('ts_code'))
+    },
+    showCharts() {
+      let multipleSelection = []
+      for (let i = 0; i < this.multipleSelection.length; i++) {
+        multipleSelection.push({
+          ts_code: this.multipleSelection[i].ts_code,
+          name: this.multipleSelection[i].name,
+          type: 'fund'
+        })
+      }
+      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
+        Message({
+          // message: error.message,
+          message: 'The selected items should be more than 0 and less than 10',
+          type: 'error',
+          duration: 5 * 1000
+        })
+        return
+      }
+      this.$router.push({
+        name: 'NavChart',
+        params: {
+          codes: multipleSelection
+        }
+      })
+      this.multiLineVisible = false
+    },
+
     drawLine(item) {
       const multipleSelection = []
       multipleSelection.push({
@@ -283,6 +366,9 @@ export default {
       const { prop, order } = data
       this.sortByColumn(prop, order)
     },
+    expandChange(data) {
+      console.log(data)
+    },
     sortByColumn(prop, order) {
       if (order === 'ascending') {
         this.listQuery.ordering = prop
@@ -295,7 +381,6 @@ export default {
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows
-      this.$emit('company_multiple_selection', this.multipleSelection)
     },
     getSortClass: function(key) {
       const sort = this.listQuery.ordering
@@ -311,5 +396,29 @@ export default {
 <style>
 .tab-container {
   margin: 20px;
+}
+/* fallback */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../icons/gstatic/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2") format('woff2');
+  /*src: url(https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');*/
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
 </style>

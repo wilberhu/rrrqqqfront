@@ -8,6 +8,7 @@ export default {
     daily_basic: 'Daily Basic',
     fund: 'Fund',
     nav: 'Nav',
+    portfolio: 'Portfolio',
     charts: 'Charts',
     line: 'Line',
     close: 'Close',
@@ -287,6 +288,17 @@ export default {
       purc_startdate: 'purc_startdate',
       redm_startdate: 'redm_startdate',
       market: 'market'
+    },
+    basic_fund_portfolio: {
+      index: 'index',
+      ts_code: 'ts_code',
+      ann_date: 'ann_date',
+      end_date: 'end_date',
+      symbol: 'symbol',
+      mkv: 'mkv',
+      amount: 'amount',
+      stk_mkv_ratio: 'stk_mkv_ratio',
+      stk_float_ratio: 'stk_float_ratio'
     },
     daily_fund: {
       ts_code: 'ts_code',

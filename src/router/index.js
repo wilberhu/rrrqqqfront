@@ -123,6 +123,12 @@ export const constantRoutes = [
         name: 'FundNav',
         component: () => import('@/views/fund/nav'),
         meta: { title: 'nav', icon: 'table' }
+      },
+      {
+        path: 'portfolio',
+        name: 'FundPortfolio',
+        component: () => import('@/views/fund/basic_simple'),
+        meta: { title: 'portfolio', icon: 'table' }
       }
     ]
   },

@@ -132,12 +132,6 @@ export default {
       return parseFloat(realVal)
     }
   },
-  props: {
-    deleteSelection: {
-      type: String,
-      default: undefined
-    }
-  },
   data() {
     return {
       tableKey: 0,
@@ -163,16 +157,6 @@ export default {
   computed: {
     offset: function() {
       return (this.page - 1) * this.listQuery.limit
-    }
-  },
-  watch: {
-    deleteSelection() {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === this.deleteSelection) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
     }
   },
   created() {

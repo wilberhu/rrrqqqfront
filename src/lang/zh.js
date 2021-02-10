@@ -8,6 +8,7 @@ export default {
     daily_basic: '每日指标',
     fund: '基金',
     nav: '净值',
+    portfolio: '基金持仓',
     charts: '图表',
     line: 'K线图',
     close: 'K线对比图',
@@ -286,6 +287,17 @@ export default {
       purc_startdate: '日常申购起始日',
       redm_startdate: '日常赎回起始日',
       market: 'E场内O场外'
+    },
+    basic_fund_portfolio: {
+      index: '序号',
+      ts_code: '基金代码',
+      ann_date: '公告日期',
+      end_date: '截止日期',
+      symbol: '股票代码',
+      mkv: '持有股票市值(元)',
+      amount: '持有股票数量(股)',
+      stk_mkv_ratio: '占股票市值比',
+      stk_float_ratio: '占流通股本比例'
     },
     daily_fund: {
       ts_code: '基金代码',

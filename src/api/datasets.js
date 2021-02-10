@@ -1,4 +1,6 @@
 import request from '@/utils/request'
+import axios from "axios";
+import { getToken } from '@/utils/auth'
 
 export function fetchList(query) {
   return request({
@@ -25,9 +27,12 @@ export function editDataset(id, data) {
 }
 
 export function getDatasetHighlight(id) {
-  return request({
+  return axios({
     url: '/api/datasets/' + id + '/highlight/',
-    method: 'get'
+    method: 'get',
+    headers:{
+      Authorization: 'Bearer ' + getToken(),
+    }
   })
 }
 

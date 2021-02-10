@@ -1,78 +1,67 @@
 <template>
   <div class="tab-container">
     <div class="filter-container">
-      <el-input placeholder="ts_code" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch"/>
-      <!-- <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleSearch">
-        <el-option v-for="item in orderingOptions" :key="item.key" :label="item.label" :value="item.key"/>
-      </el-select> -->
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">{{ $t('table.search') }}</el-button>
+      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" :disabled="total===0" @click="handleDownload">
+        Export
+      </el-button>
     </div>
     <el-table
       v-loading="listLoading"
       ref="multipleTable"
       :key="tableKey"
       :data="list"
-      row-key="ts_code"
+      max-height="300"
+      style="width: 100%"
+      row-key="index"
       border
       fit
       highlight-current-row
       @sort-change="sortChange"
       @selection-change="handleSelectionChange">
-      <el-table-column fixed :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
-      <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.nav_fund.ts_code')" :class-name="getSortClass('ts_code')" width="110">
+      <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
+      <el-table-column prop="index" align="center" :label="$t('table.basic_fund_portfolio.index')" :class-name="getSortClass('index')" width="110">
         <template slot-scope="scope">
-          <!--{{ scope.$index }}-->
+          {{ scope.row.index }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="ts_code" :label="$t('table.basic_fund_portfolio.ts_code')" :class-name="getSortClass('ts_code')">
+        <template slot-scope="scope">
           {{ scope.row.ts_code }}
         </template>
       </el-table-column>
-      <el-table-column sortable fixed prop="name" :label="$t('table.nav_fund.name')" :class-name="getSortClass('name')">
+      <el-table-column prop="ann_date" :label="$t('table.basic_fund_portfolio.ann_date')">
         <template slot-scope="scope">
-          {{ scope.row.name }}
+          {{ scope.row.ann_date }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="ann_date" :label="$t('table.nav_fund.ann_date')">
+      <el-table-column prop="end_date" :label="$t('table.basic_fund_portfolio.end_date')">
         <template slot-scope="scope">
-          <span>{{ scope.row.ann_date }}</span>
+          {{ scope.row.end_date }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="end_date" :label="$t('table.nav_fund.end_date')">
+      <el-table-column prop="symbol" :label="$t('table.basic_fund_portfolio.symbol')">
         <template slot-scope="scope">
-          <span>{{ scope.row.end_date }}</span>
+          {{ scope.row.symbol }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="unit_nav" :label="$t('table.nav_fund.unit_nav')">
+      <el-table-column prop="mkv" :label="$t('table.basic_fund_portfolio.mkv')">
         <template slot-scope="scope">
-          <span>{{ scope.row.unit_nav }}</span>
+          {{ scope.row.mkv }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="accum_nav" :label="$t('table.nav_fund.accum_nav')">
+      <el-table-column prop="amount" :label="$t('table.basic_fund_portfolio.amount')">
         <template slot-scope="scope">
-          <span>{{ scope.row.accum_nav }}</span>
+          {{ scope.row.amount }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="accum_div" :label="$t('table.nav_fund.accum_div')">
+      <el-table-column prop="stk_mkv_ratio" :label="$t('table.basic_fund_portfolio.stk_mkv_ratio')">
         <template slot-scope="scope">
-          <span>{{ scope.row.accum_div }}</span>
+          {{ scope.row.stk_mkv_ratio }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="net_asset" :label="$t('table.nav_fund.net_asset')">
+      <el-table-column prop="stk_float_ratio" :label="$t('table.basic_fund_portfolio.stk_float_ratio')">
         <template slot-scope="scope">
-          <span>{{ scope.row.net_asset }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column sortable prop="total_netasset" :label="$t('table.nav_fund.total_netasset')">
-        <template slot-scope="scope">
-          <span>{{ scope.row.total_netasset }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column sortable prop="adj_nav" :label="$t('table.nav_fund.adj_nav')">
-        <template slot-scope="scope">
-          <span>{{ scope.row.adj_nav }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="nav_data" :label="$t('table.nav_data')">
-        <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.nav_data') }}</el-button>
+          {{ scope.row.stk_float_ratio }}
         </template>
       </el-table-column>
     </el-table>
@@ -82,12 +71,12 @@
 </template>
 
 <script>
-import { fetchList } from '@/api/fundNav'
+import { fetchItemPortfolio, fetchItemPortfolioDownload } from '@/api/fundBasic'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
-  name: 'NavFund',
+  name: 'FundPortfolio',
   components: {
     Pagination
   },
@@ -103,16 +92,23 @@ export default {
       return parseFloat(realVal)
     }
   },
+  props: {
+    ts_code: {
+      type: String,
+      default: undefined
+    }
+  },
   data() {
     return {
-      tableKey: 0,
+      tableKey: 'fund_portfolio' + this.ts_code,
       list: [],
       total: 0,
       listLoading: true,
+      downloadLoading: false,
       page: 1,
 
       listQuery: {
-        limit: 20,
+        limit: 100,
         offset: undefined,
         ordering: undefined,
         search: undefined
@@ -134,33 +130,20 @@ export default {
     this.getList()
   },
   methods: {
-    drawLine(item) {
-      const multipleSelection = []
-      multipleSelection.push({
-        ts_code: item.ts_code,
-        name: item.name,
-        type: 'fund'
-      })
-      this.$router.push({
-        name: 'NavChart',
-        params: {
-          codes: multipleSelection
-        }
-      })
-    },
     getList() {
       this.listQuery.offset = this.offset
       this.listLoading = true
-      fetchList(this.listQuery).then(response => {
+      fetchItemPortfolio(this.ts_code, this.listQuery).then(response => {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
-
         // Just to simulate the time of the request
         setTimeout(() => {
           this.listLoading = false
         }, 1.5 * 1000)
-      })
+      }).catch(
+        this.listLoading = false
+      )
     },
     handleSearch() {
       this.page = 1
@@ -191,13 +174,26 @@ export default {
         : sort === `-${key}`
           ? 'descending'
           : ''
+    },
+    handleDownload() {
+      fetchItemPortfolioDownload(this.ts_code).then(response => {
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+        let fileLink = document.createElement('a')
+        fileLink.href = fileURL
+        fileLink.setAttribute('download', response.headers['content-disposition'].split('=')[1].replace(/^\"+|\"+$/g, ''));
+        document.body.appendChild(fileLink)
+        fileLink.click();
+        document.body.removeChild(fileLink)
+        // Just to simulate the time of the request
+        setTimeout(() => {
+        }, 1.5 * 1000)
+      })
     }
   }
 }
 </script>
-
 <style>
-  .tab-container {
-    margin: 20px;
-  }
+.tab-container {
+  margin: 20px;
+}
 </style>

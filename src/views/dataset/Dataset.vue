@@ -148,9 +148,6 @@
 /* eslint-disable */
   import {fetchList, uploadDataset, editDataset, deleteDataset, deleteMutipleDataset, getDatasetHighlight} from '@/api/datasets'
   import Pagination from '@/components/Pagination'
-  import { getToken } from '@/utils/auth'
-
-  import axios from 'axios'
 
   export default {
     name: 'Dataset',
@@ -239,15 +236,7 @@
         this.importVisible = true
       },
       handleDownload(index, row) {
-        axios({
-          url: '/api/datasets/' + row.id + '/highlight/',
-          method: 'GET',
-          headers:{
-            Authorization: 'Bearer ' + getToken(),
-          }
-
-        })
-          .then(response => {
+        getDatasetHighlight(row.id).then(response => {
           let fileURL = window.URL.createObjectURL(new Blob([response.data]))
           let fileLink = document.createElement('a')
           fileLink.href = fileURL

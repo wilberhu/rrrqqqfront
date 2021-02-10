@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-form ref="compositionForm" :model="compositionForm">
       <el-row :gutter="8">
-        <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}" style="padding-right:8px;margin-bottom:30px;">
+        <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}">
           <el-form-item label="组合名称" label-width="120px" v-if="isEdit">
             <el-tooltip class="item" :content="compositionForm.description" :disabled="!compositionForm.description" placement="bottom">
               <span>{{compositionForm.name}}</span>
@@ -14,30 +14,32 @@
           <el-form-item label="手续费" label-width="120px">
             <el-input type="number" :step="0.0001" min="0" max="0.1" v-model="compositionForm.commission" placeholder="eg: 0.0005"></el-input>
           </el-form-item>
-          <el-timeline :reverse="false">
-            <el-timeline-item
-              v-for="(activity, activity_index) in compositionForm.activities"
-              :key="activity_index"
-              :timestamp="activity.timestamp">
+          <div style="max-height: calc(100vh - 300px); overflow: auto;" >
+            <el-timeline :reverse="false">
+              <el-timeline-item
+                v-for="(activity, activity_index) in compositionForm.activities"
+                :key="activity_index"
+                :timestamp="activity.timestamp">
               <span v-for="(company, company_index) in activity.companies.slice(0,3)" :key="company_index">
                 {{company.ts_code}}: {{company.share}}
               </span>
-              <span v-if="activity.companies.length>3">
+                <span v-if="activity.companies.length>3">
                 ......
               </span>
-              <span v-if="activity.freecash < 0" style="color: red; margin-left: 5px;">
+                <span v-if="activity.freecash < 0" style="color: red; margin-left: 5px;">
                 !
               </span>
-              <div class="edit" @click="editTimestamp( activity_index )" >
-                <i class="el-icon-edit-outline" />
-              </div>
-              <div class="destroy" @click="destroyTimestamp( activity_index )" >
-                <i class="el-icon-close" />
-              </div>
-            </el-timeline-item>
-          </el-timeline>
-          <div class="add" @click="addTimestamp()" >
-            <i class="el-icon-circle-plus" />
+                <div class="edit" @click="editTimestamp( activity_index )" >
+                  <i class="el-icon-edit-outline" />
+                </div>
+                <div class="destroy" @click="destroyTimestamp( activity_index )" >
+                  <i class="el-icon-close" />
+                </div>
+              </el-timeline-item>
+            </el-timeline>
+            <div class="add" @click="addTimestamp()" >
+              <i class="el-icon-circle-plus" />
+            </div>
           </div>
           <el-button
             style="margin:40px;"
@@ -49,6 +51,35 @@
         <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
           <el-row>
             <line-chart :chart-data="lineChartData" />
+          </el-row>
+          <el-row>
+            <el-button :loading="downloadLoading" style="margin:0 0 20px 20px;" type="primary" icon="el-icon-document" @click="handleDownload">
+              Export CSV
+            </el-button>
+            <el-table
+              v-loading="listLoading"
+              ref="multipleTable"
+              :key="tableKey"
+              :data="datalist"
+              border
+              fit
+              highlight-current-row>
+              <el-table-column align="center" prop="trade_date" label="trade_date">
+                <template slot-scope="scope">
+                  <span>{{ scope.row.trade_date }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column align="center" prop="ts_code" label="ts_code">
+                <template slot-scope="scope">
+                  <span>{{ scope.row.ts_code }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column align="center" prop="share" label="share">
+                <template slot-scope="scope">
+                  <span>{{ scope.row.share }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
           </el-row>
         </el-col>
       </el-row>
@@ -142,8 +173,9 @@
 <script>
 import { fetchAllCompanies } from '@/api/stockBasic'
 import { getHistData, fetchCompanyClose } from '@/api/histData'
-import { dailyTrader, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
+import { dailyTrader, fetchDataframe, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'
+import { parseTime } from '@/utils'
 
 let tradeCalender = []
 const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
@@ -183,10 +215,11 @@ export default {
   },
   data() {
     return {
+      tableKey: 0,
       companies: [],
       compositionForm: {
         id: undefined,
-        name: undefined,
+        name: 'composition',
         description: undefined,
         allfund: 100000,
         commission: 0,
@@ -207,6 +240,9 @@ export default {
         codeList: [],
         data: []
       },
+      datalist: [],
+      listLoading: false,
+      downloadLoading: false,
       editVisible: false,
       isTimestampEdit: false,
       delVisible: false,
@@ -519,7 +555,14 @@ export default {
     updateState() {
       dailyTrader(this.compositionForm).then(response => {
         this.lineChartData = Object.assign({}, response)
-      })
+      }).then(() => {
+          this.listLoading = true
+          fetchDataframe(this.compositionForm).then(response => {
+          this.listLoading = false
+          this.datalist = Object.assign([], response)
+        })
+      }
+      )
     },
     setTagsViewTitle() {
       const title = 'Edit Composition'
@@ -581,6 +624,31 @@ export default {
           }
         }
       })
+    },
+    handleDownload() {
+      this.downloadLoading = true
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['trade_date', 'ts_code', 'share']
+        const filterVal = ['trade_date', 'ts_code', 'share']
+        const data = this.formatJson(filterVal, this.datalist)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: this.compositionForm.name,
+          autoWidth: true,
+          bookType: 'csv'
+        })
+        this.downloadLoading = false
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'trade_date') {
+          return parseTime(v[j])
+        } else {
+          return v[j]
+        }
+      }))
     }
   }
 }

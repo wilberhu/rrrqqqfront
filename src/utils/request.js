@@ -39,7 +39,7 @@ service.interceptors.response.use(
     if (status === 401 || status === 403) {
       console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
       Message({
-        message: res.message,
+        message: res.detail,
         type: 'error',
         duration: 5 * 1000
       }).then(() => {
@@ -60,7 +60,7 @@ service.interceptors.response.use(
           })
         })
       }
-      return Promise.reject(res.message || 'error')
+      return Promise.reject(res.detail || 'error')
     } else {
       return res
     }

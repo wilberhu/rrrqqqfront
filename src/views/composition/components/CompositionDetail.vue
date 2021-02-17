@@ -21,7 +21,7 @@
                 :key="activity_index"
                 :timestamp="activity.timestamp">
               <span v-for="(company, company_index) in activity.companies.slice(0,3)" :key="company_index">
-                {{company.ts_code}}: {{company.share}}
+                {{ companyDict[company.ts_code] }}: {{ company.share }}
               </span>
                 <span v-if="activity.companies.length>3">
                 ......
@@ -53,16 +53,17 @@
             <line-chart :chart-data="lineChartData" />
           </el-row>
           <el-row>
-            <el-button :loading="downloadLoading" style="margin:0 0 20px 20px;" type="primary" icon="el-icon-document" @click="handleDownload">
+            <el-button :loading="downloadLoading" style="margin:0 0 20px 20px;" type="primary" icon="el-icon-document" :disabled="list.length===0" @click="handleDownload">
               Export CSV
             </el-button>
             <el-table
               v-loading="listLoading"
               ref="multipleTable"
               :key="tableKey"
-              :data="datalist"
+              :data="list"
               border
               fit
+              max-height="350"
               highlight-current-row>
               <el-table-column align="center" prop="trade_date" label="trade_date">
                 <template slot-scope="scope">
@@ -74,9 +75,19 @@
                   <span>{{ scope.row.ts_code }}</span>
                 </template>
               </el-table-column>
+              <el-table-column align="center" prop="name" label="name">
+                <template slot-scope="scope">
+                  <span>{{ scope.row.name }}</span>
+                </template>
+              </el-table-column>
               <el-table-column align="center" prop="share" label="share">
                 <template slot-scope="scope">
                   <span>{{ scope.row.share }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column align="center" prop="open" label="open">
+                <template slot-scope="scope">
+                  <span>{{ scope.row.open }}</span>
                 </template>
               </el-table-column>
             </el-table>
@@ -89,7 +100,7 @@
     <el-dialog :visible.sync="editVisible" :title="isTimestampEdit ? 'Edit' : 'Add'" width="80vw" center>
       <el-form ref="compositionForm" :model="activityForm" class="edit_dialog">
         <el-form-item label="资金总额" label-width="120px">
-          <el-input type="number" readonly="readonly" v-model="activityForm.stock" placeholder="请输入内容" style="width: 220px;"></el-input>
+          <el-input type="number" readonly="readonly" v-model="activityForm.allfund" placeholder="请输入内容" style="width: 220px;"></el-input>
         </el-form-item>
         <el-form-item label="日期" label-width="120px">
           <el-date-picker
@@ -101,21 +112,23 @@
             type="date"
             aria-required="true"
             placeholder="选择日期"
-            @blur="computeFund($event, activityForm, null)"
+            @blur="computeActivity($event, activityForm, null)"
           >
           </el-date-picker>
         </el-form-item>
         <el-form-item label="股票份额" label-width="120px">
           <el-form-item style="margin: 5px 0" v-for="(company, company_index) in activityForm.companies" :key="company_index">
             <el-autocomplete
-              v-model="activityForm.companies[company_index].ts_code_name"
+              v-model="activityForm.companies[company_index].ts_code"
               :fetch-suggestions="querySearchAsync"
               placeholder="请输入内容"
               style="width: 220px;"
               @select="handleSelect($event, company_index)"
-            ></el-autocomplete>
+            >
+              <template slot="suffix">{{ companyDict[activityForm.companies[company_index].ts_code] }}</template>
+            </el-autocomplete>
             <span style="margin-left: 20px;">股数：</span>
-            <el-input type="number" min="0" :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 100px;" @input="computeFund($event, activityForm, company_index)"></el-input>
+            <el-input type="number" min="0" :readonly="false" v-model="company.share" placeholder="请输入内容" style="width: 100px;" @input="computeActivity($event, activityForm, company_index)"></el-input>
             <span style="margin-left: 20px;">股价：{{ activityForm.companies[company_index].open || '' }}</span>
             <span style="margin-left: 20px;">资金：{{ activityForm.companies[company_index].allfund || '' }}</span>
             <el-button
@@ -172,8 +185,7 @@
 
 <script>
 import { fetchAllCompanies } from '@/api/stockBasic'
-import { getHistData, fetchCompanyClose } from '@/api/histData'
-import { dailyTrader, fetchDataframe, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
+import { calculateComposition, calculateActivity, fetchDataframe, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'
 import { parseTime } from '@/utils'
 
@@ -217,6 +229,7 @@ export default {
     return {
       tableKey: 0,
       companies: [],
+      companyDict: {},
       compositionForm: {
         id: undefined,
         name: 'composition',
@@ -240,7 +253,7 @@ export default {
         codeList: [],
         data: []
       },
-      datalist: [],
+      list: [],
       listLoading: false,
       downloadLoading: false,
       editVisible: false,
@@ -263,16 +276,16 @@ export default {
   },
   mounted() {
   },
-  created() {
+  async created() {
+    await this.getAllCompanies()
+    this.getTradeCalender()
+
     if (this.isEdit) {
       this.compositionForm.id = this.$route.params && this.$route.params.id
       this.fetchData(this.compositionForm.id)
     } else {
       this.updateState()
     }
-
-    this.getAllCompanies()
-    this.getTradeCalender()
 
     // Why need to make a copy of this.$route here?
     // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
@@ -281,15 +294,14 @@ export default {
   },
   methods: {
     fetchData(id) {
-      fetchItem(id)
-        .then(response => {
-          // set tagsview title
-          this.setTagsViewTitle()
-          // set page title
-          this.setPageTitle()
-          this.compositionForm = Object.assign({}, response)
-          this.updateState()
-        })
+      fetchItem(id).then(response => {
+        // set tagsview title
+        this.setTagsViewTitle()
+        // set page title
+        this.setPageTitle()
+        this.compositionForm = Object.assign({}, response)
+        this.updateState()
+      })
     },
     submit() {
       this.updateState()
@@ -311,7 +323,7 @@ export default {
       this.activityForm = Object.assign({}, this.compositionForm.activities[index])
       this.editVisible = true
       this.isTimestampEdit = true
-      this.computeFund(null, this.activityForm, null)
+      this.computeActivity(null, this.activityForm, null)
     },
     submitTimestamp() {
       if (this.activityForm.timestamp == null || this.activityForm.timestamp === '') {
@@ -392,7 +404,7 @@ export default {
 
             // check the later date freecash >= 0
             for (let j = i; j < this.compositionForm.activities.length; j++) {
-              this.computeFund(null, this.compositionForm.activities[j], null)
+              this.computeActivity(null, this.compositionForm.activities[j], null)
               if (this.compositionForm.activities[j].freecash < 0) {
                 this.$message({
                   showClose: true,
@@ -427,7 +439,6 @@ export default {
     },
     addCompany(item) {
       this.activityForm.companies.push({
-        ts_code_name: '',
         name: '',
         ts_code: '',
         share: 0
@@ -435,7 +446,7 @@ export default {
     },
     deleteCompany(item, company_index) {
       this.activityForm.companies.splice(company_index, 1)
-      this.activityForm.freecash = this.activityForm.stock - this.activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
+      this.activityForm.freecash = this.activityForm.allfund - this.activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
     },
     querySearchAsync(queryString, cb) {
       const companies = this.companies
@@ -453,96 +464,37 @@ export default {
     handleSelect(event, company_index) {
       this.activityForm.companies[company_index].ts_code = event.ts_code
       this.activityForm.companies[company_index].name = event.name
-      this.activityForm.companies[company_index].ts_code_name = event.value
-      if (this.activityForm.timestamp == null || this.activityForm.timestamp === '') {
-        return
-      }
-      const queryParams = {
-        date__lte: this.activityForm.timestamp,
-        date__gte: this.activityForm.timestamp
-      }
-      getHistData(this.activityForm.companies[company_index].ts_code, queryParams).then(response => {
-        if (response.hist_data[0]) {
-          // ['trade_date', 'open', 'close', 'low', 'high'], 2 means open
-          this.activityForm.companies[company_index].open = response.hist_data[0][2]
-          this.computeFund(null, this.activityForm, company_index)
-        } else {
-          this.activityForm.companies[company_index].open = 0
-          this.computeFund(null, this.activityForm, company_index)
-        }
-      })
+      this.computeActivity(null, this.activityForm, company_index)
     },
-    handleBlur(event, company_index) {
-      const inputValue = this.activityForm.companies[company_index].ts_code_name
-      const companies = this.companies
-      if (inputValue) {
-        const results = inputValue ? companies.filter(this.createContainsFilter(inputValue)) : companies
-        if (results.length === 1) {
-          this.handleSelect(results[0], company_index)
-        } else {
-          this.activityForm.companies[company_index].ts_code = ''
-          this.activityForm.companies[company_index].name = ''
-          this.activityForm.companies[company_index].ts_code_name = ''
-        }
-      }
-    },
-    computeFund(event, activityForm, company_index) {
+    computeActivity(event, activityForm, company_index) {
       if (activityForm.timestamp == null || activityForm.timestamp === '') {
         return
       }
-      if (this.lineChartData.timestamp.indexOf(activityForm.timestamp) !== -1) {
-        activityForm.stock = this.lineChartData.data[0][this.lineChartData.timestamp.indexOf(activityForm.timestamp)]
-      } else {
-        activityForm.stock = this.compositionForm.allfund
+      const data = {
+        composition: this.compositionForm,
+        activity: activityForm,
+        index: company_index
       }
-      if (company_index != null && company_index !== '') {
-        activityForm.companies[company_index].allfund = activityForm.companies[company_index].open * activityForm.companies[company_index].share
-        activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
-      } else {
-        const queryParams = {
-          date__lte: activityForm.timestamp,
-          date__gte: activityForm.timestamp
-        }
-        let data = {
-          ts_code_list: [],
-          type_list: []
-        }
-        for (const item of activityForm.companies) {
-          if (item.ts_code) {
-            data.ts_code_list.push(item.ts_code)
-            data.type_list.push('company')
-          }
-        }
-        if ( data.ts_code_list.length > 0) {
-          fetchCompanyClose(data, 'open', queryParams).then(response => {
-            if (response.close_data[0]) {
-              for (let i = 0; i < activityForm.companies.length; i++) {
-                for (let j = 0; j < response.ts_code_list.length; j++) {
-                  if (activityForm.companies[i].ts_code === response.ts_code_list[j]) {
-                    activityForm.companies[i].name = response.name_list[j]
-                    activityForm.companies[i].open = response.close_data[j][0]
-                    activityForm.companies[i].allfund = activityForm.companies[i].open * activityForm.companies[i].share
-                  }
-                }
-              }
-            }
-          })
-        }
-        activityForm.freecash = activityForm.stock - activityForm.companies.reduce((total, item) => total + Number(item.allfund || 0), 0)
-      }
+      calculateActivity(data).then(response => {
+        this.activityForm = Object.assign({}, response)
+      })
     },
-    getAllCompanies() {
-      fetchAllCompanies().then(response => {
-        this.companies = []
-        for (const item of response) {
-          this.companies.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-        }, 1.5 * 1000)
+    async getAllCompanies() {
+      return new Promise(resolve => {
+        fetchAllCompanies().then(response => {
+          this.companies = []
+          for (const item of response) {
+            this.companies.push({
+              value: item.ts_code + " - " + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+            this.companyDict[item.ts_code] = item.name
+          }
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
       })
     },
     getTradeCalender() {
@@ -553,16 +505,18 @@ export default {
       })
     },
     updateState() {
-      dailyTrader(this.compositionForm).then(response => {
+      calculateComposition(this.compositionForm).then(response => {
         this.lineChartData = Object.assign({}, response)
       }).then(() => {
-          this.listLoading = true
-          fetchDataframe(this.compositionForm).then(response => {
+        this.listLoading = true
+        fetchDataframe(this.compositionForm).then(response => {
           this.listLoading = false
-          this.datalist = Object.assign([], response)
+          this.list = Object.assign([], response)
+          for (const item of this.list) {
+            item.name = this.companyDict[item.ts_code]
+          }
         })
-      }
-      )
+      })
     },
     setTagsViewTitle() {
       const title = 'Edit Composition'
@@ -628,9 +582,9 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['trade_date', 'ts_code', 'share']
-        const filterVal = ['trade_date', 'ts_code', 'share']
-        const data = this.formatJson(filterVal, this.datalist)
+        const tHeader = ['trade_date', 'ts_code', 'name', 'share', 'open']
+        const filterVal = ['trade_date', 'ts_code', 'name', 'share', 'open']
+        const data = this.formatJson(filterVal, this.list)
         excel.export_json_to_excel({
           header: tHeader,
           data,
@@ -645,6 +599,8 @@ export default {
       return jsonData.map(v => filterVal.map(j => {
         if (j === 'trade_date') {
           return parseTime(v[j])
+        } else if (j === 'name') {
+          return this.companyDict[v['ts_code']]
         } else {
           return v[j]
         }

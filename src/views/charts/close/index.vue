@@ -277,6 +277,7 @@ export default {
         })
         this.form.ts_code_list.push(item.ts_code)
         this.form.name_list.push(item.name)
+        this.form.type_list.push(key)
         this.inputVisible[key] = false
         this.inputValue[key] = ''
       }

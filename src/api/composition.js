@@ -1,8 +1,17 @@
 import request from '@/utils/request'
 
-export function dailyTrader(data) {
+export function calculateComposition(data) {
   return request({
     url: '/api/compositions/calculate/',
+    method: 'post',
+    data
+  })
+}
+
+
+export function calculateActivity(data) {
+  return request({
+    url: '/api/compositions/activity/',
     method: 'post',
     data
   })

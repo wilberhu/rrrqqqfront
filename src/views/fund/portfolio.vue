@@ -10,7 +10,7 @@
         <el-table
           v-loading="listLoading"
           :ref="'portfolioTable'+date"
-          :key="tableKey"
+          :key="paging[date].tableKey"
           :data="portfolio.results.slice((paging[date].page-1)*limit,paging[date].page*limit)"
           max-height="500"
           style="width: 100%"
@@ -108,7 +108,6 @@ export default {
   },
   data() {
     return {
-      tableKey: 0,
       activeName: '',
       data: {},
       listLoading: true,
@@ -151,7 +150,8 @@ export default {
         for (const date of dateList) {
           this.paging[date] = {
             total: this.data[date].count,
-            page: 1
+            page: 1,
+            tableKey: Number(date) * 100
           }
         }
         // Just to simulate the time of the request
@@ -163,7 +163,7 @@ export default {
       )
     },
     handleSizeChange(date) {
-      this.tableKey += 1
+      this.paging[date].tableKey += 1
     },
     handleSearch() {
       this.page = 1

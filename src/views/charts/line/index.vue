@@ -13,12 +13,14 @@
       </el-form-item>
       <el-form-item>
         <el-autocomplete
-          v-model="form.ts_code_name"
+          v-model="form.ts_code"
           :fetch-suggestions="querySearchAsync"
           placeholder="请输入内容"
           style="width: 220px;"
           @select="handleSelect($event)"
-        />
+        >
+          <template slot="suffix">{{ form.name }}</template>
+        </el-autocomplete>
       </el-form-item>
     </el-form>
     <Chart ref="Chart" :form="form" height="calc(100vh - 184px)" width="100%" />
@@ -42,7 +44,6 @@ export default {
         ts_code: undefined,
         name: undefined,
         type: 'company',
-        ts_code_name: undefined,
         histData: null,
         maData: null
       },
@@ -61,10 +62,9 @@ export default {
   activated() {
     if (this.$route.params.ts_code) {
       this.show = true
-      this.form.ts_code_name = this.$route.params.ts_code + ' - ' + this.$route.params.name
       this.form.ts_code = this.$route.params.ts_code
-      this.form.name = this.$route.params.name
       this.form.type = this.$route.params.type
+      this.form.name = this.$route.params.name
       this.drawCharts()
     } else {
       this.show = false
@@ -75,18 +75,21 @@ export default {
       if (this.form.ts_code) {
         if (this.form.type === 'company') {
           getCompanyHistData(this.form.ts_code).then(response => {
+            this.form.name = response.name
             this.form.histData = response.hist_data
             this.form.maData = response.ma_data
             this.$refs.Chart.draw()
           })
         } else if (this.form.type === 'index') {
           getIndexHistData(this.form.ts_code).then(response => {
+            this.form.name = response.name
             this.form.histData = response.hist_data
             this.form.maData = response.ma_data
             this.$refs.Chart.draw()
           })
         } else if (this.form.type === 'fund') {
           getFundHistData(this.form.ts_code).then(response => {
+            this.form.name = response.name
             this.form.histData = response.hist_data
             this.form.maData = response.ma_data
             this.$refs.Chart.draw()
@@ -112,7 +115,6 @@ export default {
     handleSelect(event) {
       this.form.ts_code = event.ts_code
       this.form.name = event.name
-      this.form.ts_code_name = event.value
       this.drawCharts()
     },
 

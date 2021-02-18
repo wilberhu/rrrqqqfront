@@ -1,71 +1,79 @@
 <template>
   <div class="tab-container">
     <div class="filter-container">
-      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" :disabled="total===0" @click="handleDownload">
+      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" :disabled="listLoading" @click="handleDownload">
         Export
       </el-button>
     </div>
-    <el-table
-      v-loading="listLoading"
-      ref="multipleTable"
-      :key="tableKey"
-      :data="list"
-      max-height="300"
-      style="width: 100%"
-      row-key="index"
-      border
-      fit
-      highlight-current-row
-      @sort-change="sortChange"
-      @selection-change="handleSelectionChange">
-      <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
-      <el-table-column prop="index" align="center" :label="$t('table.basic_fund_portfolio.index')" :class-name="getSortClass('index')" width="110">
-        <template slot-scope="scope">
-          {{ scope.row.index }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="ts_code" :label="$t('table.basic_fund_portfolio.ts_code')" :class-name="getSortClass('ts_code')">
-        <template slot-scope="scope">
-          {{ scope.row.ts_code }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="ann_date" :label="$t('table.basic_fund_portfolio.ann_date')">
-        <template slot-scope="scope">
-          {{ scope.row.ann_date }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="end_date" :label="$t('table.basic_fund_portfolio.end_date')">
-        <template slot-scope="scope">
-          {{ scope.row.end_date }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="symbol" :label="$t('table.basic_fund_portfolio.symbol')">
-        <template slot-scope="scope">
-          {{ scope.row.symbol }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="mkv" :label="$t('table.basic_fund_portfolio.mkv')">
-        <template slot-scope="scope">
-          {{ scope.row.mkv }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="amount" :label="$t('table.basic_fund_portfolio.amount')">
-        <template slot-scope="scope">
-          {{ scope.row.amount }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="stk_mkv_ratio" :label="$t('table.basic_fund_portfolio.stk_mkv_ratio')">
-        <template slot-scope="scope">
-          {{ scope.row.stk_mkv_ratio }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="stk_float_ratio" :label="$t('table.basic_fund_portfolio.stk_float_ratio')">
-        <template slot-scope="scope">
-          {{ scope.row.stk_float_ratio }}
-        </template>
-      </el-table-column>
-    </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="page" :limit.sync="listQuery.limit" @pagination="getList" />
+    <el-tabs v-model="activeName" @tab-click="handleTabClick">
+      <el-tab-pane :label="date" :name="date" v-for="(portfolio, date) in data" :key="date">
+        <el-table
+          v-loading="listLoading"
+          :ref="'portfolioTable'+date"
+          :key="tableKey"
+          :data="portfolio.results.slice((paging[date].page-1)*limit,paging[date].page*limit)"
+          max-height="500"
+          style="width: 100%"
+          row-key="index"
+          border
+          fit
+          highlight-current-row
+          @selection-change="handleSelectionChange">
+          <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
+          <el-table-column prop="index" align="center" :label="$t('table.basic_fund_portfolio.index')" width="110">
+            <template slot-scope="scope">
+              {{ scope.row.index }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="ts_code" :label="$t('table.basic_fund_portfolio.ts_code')">
+            <template slot-scope="scope">
+              {{ scope.row.ts_code }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="ann_date" :label="$t('table.basic_fund_portfolio.ann_date')">
+            <template slot-scope="scope">
+              {{ scope.row.ann_date }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="end_date" :label="$t('table.basic_fund_portfolio.end_date')">
+            <template slot-scope="scope">
+              {{ scope.row.end_date }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="symbol" :label="$t('table.basic_fund_portfolio.symbol')">
+            <template slot-scope="scope">
+              {{ scope.row.symbol }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="mkv" :label="$t('table.basic_fund_portfolio.mkv')">
+            <template slot-scope="scope">
+              {{ scope.row.mkv }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="amount" :label="$t('table.basic_fund_portfolio.amount')">
+            <template slot-scope="scope">
+              {{ scope.row.amount }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="stk_mkv_ratio" :label="$t('table.basic_fund_portfolio.stk_mkv_ratio')">
+            <template slot-scope="scope">
+              {{ scope.row.stk_mkv_ratio }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="stk_float_ratio" :label="$t('table.basic_fund_portfolio.stk_float_ratio')">
+            <template slot-scope="scope">
+              {{ scope.row.stk_float_ratio }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="hist_data" :label="$t('table.hist_data')">
+            <template slot-scope="scope">
+              <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <pagination v-show="paging[date].total>0" :total="paging[date].total" :page.sync="paging[date].page" :limit.sync="limit" @pagination="handleSizeChange(date)"/>
+      </el-tab-pane>
+    </el-tabs>
 
   </div>
 </template>
@@ -100,19 +108,14 @@ export default {
   },
   data() {
     return {
-      tableKey: 'fund_portfolio' + this.ts_code,
-      list: [],
-      total: 0,
+      tableKey: 0,
+      activeName: '',
+      data: {},
       listLoading: true,
       downloadLoading: false,
-      page: 1,
+      limit: 100,
+      paging: {},
 
-      listQuery: {
-        limit: 100,
-        offset: undefined,
-        ordering: undefined,
-        search: undefined
-      },
       orderingOptions: [{ label: 'TsCode Ascending', key: 'ts_code' },
         { label: 'TsCode Descending', key: '-ts_code' },
         { label: 'Name Ascending', key: 'name' },
@@ -121,22 +124,36 @@ export default {
       multipleSelection: []
     }
   },
-  computed: {
-    offset: function() {
-      return (this.page - 1) * this.listQuery.limit
-    }
-  },
   created() {
     this.getList()
   },
   methods: {
+    drawLine(item) {
+      this.$router.push({
+        name: 'LineChart',
+        params: {
+          ts_code: item.symbol,
+          name: item.name,
+          type: 'company'
+        }
+      })
+    },
+    handleTabClick(tab, event) {
+      // console.log(tab, event)
+    },
     getList() {
-      this.listQuery.offset = this.offset
       this.listLoading = true
-      fetchItemPortfolio(this.ts_code, this.listQuery).then(response => {
-        this.list = response.results
-        this.total = response.count
+      fetchItemPortfolio(this.ts_code).then(response => {
+        let dateList = Object.keys(response)
+        this.activeName = dateList[dateList.length - 1]
+        this.data = Object.assign({}, response)
         this.listLoading = false
+        for (const date of dateList) {
+          this.paging[date] = {
+            total: this.data[date].count,
+            page: 1
+          }
+        }
         // Just to simulate the time of the request
         setTimeout(() => {
           this.listLoading = false
@@ -145,35 +162,16 @@ export default {
         this.listLoading = false
       )
     },
+    handleSizeChange(date) {
+      this.tableKey += 1
+    },
     handleSearch() {
       this.page = 1
       this.getList()
     },
-    sortChange(data) {
-      const { prop, order } = data
-      this.sortByColumn(prop, order)
-    },
-    sortByColumn(prop, order) {
-      if (order === 'ascending') {
-        this.listQuery.ordering = prop
-      } else if (order === 'descending') {
-        this.listQuery.ordering = '-' + prop
-      } else {
-        this.listQuery.ordering = undefined
-      }
-      this.handleSearch()
-    },
     handleSelectionChange(rows) {
       this.multipleSelection = rows
       this.$emit('company_multiple_selection', this.multipleSelection)
-    },
-    getSortClass: function(key) {
-      const sort = this.listQuery.ordering
-      return sort === `${key}`
-        ? 'ascending'
-        : sort === `-${key}`
-          ? 'descending'
-          : ''
     },
     handleDownload() {
       fetchItemPortfolioDownload(this.ts_code).then(response => {

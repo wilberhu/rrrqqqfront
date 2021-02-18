@@ -32,11 +32,12 @@
       @selection-change="handleSelectionChange">
       <el-table-column type="expand">
         <template slot-scope="props">
-          <el-tabs v-model="activeName" @tab-click="handleTabClick">
+          <!-- <el-tabs v-model="activeName" @tab-click="handleTabClick">
             <el-tab-pane label="portfolio" name="portfolio">
               <fund-portfolio :ts_code="props.row.ts_code"></fund-portfolio>
             </el-tab-pane>
-          </el-tabs>
+          </el-tabs> -->
+          <fund-portfolio :ts_code="props.row.ts_code"></fund-portfolio>
         </template>
       </el-table-column>
       <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>

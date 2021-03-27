@@ -1,4 +1,6 @@
 import request from '@/utils/request'
+import { getToken } from '@/utils/auth'
+import axios from "axios";
 
 export function fetchList(query) {
   return request({
@@ -76,5 +78,15 @@ export function strategyFilter(data) {
     url: '/api/strategy_filter/',
     method: 'post',
     data
+  })
+}
+
+export function fetchStrategyPortfolioDownload(path) {
+  return axios({
+    url: '/api/strategies/portfolio/' + path.split('strategies/portfolio/')[1],
+    method: 'get',
+    headers:{
+      Authorization: 'Bearer ' + getToken(),
+    }
   })
 }

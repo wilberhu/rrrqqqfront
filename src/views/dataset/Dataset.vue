@@ -127,8 +127,7 @@
             style="width: 360px"
             drag
             name="file"
-            action="/api/datasets/"
-            accept=".csv">
+            action="/api/datasets/">
             <i class="el-icon-upload" />
             <div class="el-upload__text">Drag your file here to begin or
               <em>click to browse</em>

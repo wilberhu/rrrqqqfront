@@ -11,7 +11,7 @@
           v-loading="listLoading"
           :ref="'portfolioTable'+date"
           :key="paging[date].tableKey"
-          :data="portfolio.results.slice((paging[date].page-1)*limit,paging[date].page*limit)"
+          :data="tmpList"
           max-height="500"
           style="width: 100%"
           row-key="index"
@@ -112,8 +112,9 @@ export default {
       data: {},
       listLoading: true,
       downloadLoading: false,
-      limit: 100,
+      limit: 40,
       paging: {},
+      tmpList: [],
 
       orderingOptions: [{ label: 'TsCode Ascending', key: 'ts_code' },
         { label: 'TsCode Descending', key: '-ts_code' },
@@ -138,14 +139,16 @@ export default {
       })
     },
     handleTabClick(tab, event) {
-      // console.log(tab, event)
+      console.log(tab, event)
+      this.handleSizeChange(tab.name)
     },
     getList() {
       this.listLoading = true
       fetchItemPortfolio(this.ts_code).then(response => {
-        let dateList = Object.keys(response)
-        this.activeName = dateList[dateList.length - 1]
+        const dateList = Object.keys(response)
         this.data = Object.assign({}, response)
+        this.activeName = dateList[dateList.length - 1]
+
         this.listLoading = false
         for (const date of dateList) {
           this.paging[date] = {
@@ -154,6 +157,8 @@ export default {
             tableKey: Number(date) * 100
           }
         }
+
+        this.handleSizeChange(this.activeName)
         // Just to simulate the time of the request
         setTimeout(() => {
           this.listLoading = false
@@ -163,7 +168,7 @@ export default {
       )
     },
     handleSizeChange(date) {
-      this.paging[date].tableKey += 1
+      this.tmpList = this.data[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit)
     },
     handleSearch() {
       this.page = 1
@@ -175,12 +180,12 @@ export default {
     },
     handleDownload() {
       fetchItemPortfolioDownload(this.ts_code).then(response => {
-        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
-        let fileLink = document.createElement('a')
+        const fileURL = window.URL.createObjectURL(new Blob([response.data]))
+        const fileLink = document.createElement('a')
         fileLink.href = fileURL
-        fileLink.setAttribute('download', response.headers['content-disposition'].split('=')[1].replace(/^\"+|\"+$/g, ''));
+        fileLink.setAttribute('download', response.headers['content-disposition'].split('=')[1].replace(/^\"+|\"+$/g, ''))
         document.body.appendChild(fileLink)
-        fileLink.click();
+        fileLink.click()
         document.body.removeChild(fileLink)
         // Just to simulate the time of the request
         setTimeout(() => {
@@ -192,6 +197,6 @@ export default {
 </script>
 <style>
 .tab-container {
-  margin: 20px;
+  /*margin: 20px;*/
 }
 </style>

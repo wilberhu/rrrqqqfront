@@ -26,7 +26,7 @@
                 <span v-if="activity.companies.length>2">
                   ......
                 </span>
-                  <span v-if="activity.freecash < 0" style="color: red; margin-left: 5px;">
+                <span v-if="activity.freecash < 0" style="color: red; margin-left: 5px;">
                   !
                 </span>
                 <div class="edit" @click="editTimestamp( activity_index )" >
@@ -50,49 +50,12 @@
         </el-col>
         <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
           <el-row>
-            <stack-line-chart :chart-data="lineChartData" />
+            <line-chart :chart-data="lineChartData" />
           </el-row>
         </el-col>
       </el-row>
       <el-row>
-        <el-button :loading="downloadLoading" style="margin:0 0 20px 0" type="primary" icon="el-icon-document" :disabled="list.length===0" @click="handleDownload">
-          Export CSV
-        </el-button>
-        <el-table
-          v-loading="listLoading"
-          ref="multipleTable"
-          :key="tableKey"
-          :data="list"
-          border
-          fit
-          max-height="350"
-          highlight-current-row>
-          <el-table-column align="center" prop="trade_date" label="trade_date">
-            <template slot-scope="scope">
-              <span>{{ scope.row.trade_date }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column align="center" prop="ts_code" label="ts_code">
-            <template slot-scope="scope">
-              <span>{{ scope.row.ts_code }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column align="center" prop="name" label="name">
-            <template slot-scope="scope">
-              <span>{{ scope.row.name }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column align="center" prop="share" label="share">
-            <template slot-scope="scope">
-              <span>{{ scope.row.share }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column align="center" prop="open" label="open">
-            <template slot-scope="scope">
-              <span>{{ scope.row.open }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
+        <strategy-portfolio :portfolio="portfolio"/>
       </el-row>
     </el-form>
 
@@ -185,9 +148,10 @@
 
 <script>
 import { fetchAllCompanies } from '@/api/stockBasic'
-import { calculateComposition, calculateActivity, fetchDataframe, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
-import StackLineChart from './StackLineChart'
+import { calculateComposition, calculateActivity, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
+import LineChart from './LineChart'
 import { parseTime } from '@/utils'
+import StrategyPortfolio from './StrategyPortfolio'
 
 let tradeCalender = []
 const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
@@ -215,14 +179,19 @@ const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
 }
 
 export default {
-  name: 'CompositionDetail',
+  name: 'StrategyCompositionDetail',
   components: {
-    StackLineChart
+    StrategyPortfolio,
+    LineChart
   },
   props: {
     isEdit: {
       type: Boolean,
       default: false
+    },
+    portfolio: {
+      type: Object,
+      default: undefined
     }
   },
   data() {
@@ -254,7 +223,6 @@ export default {
         data: []
       },
       list: [],
-      listLoading: false,
       downloadLoading: false,
       editVisible: false,
       isTimestampEdit: false,
@@ -285,7 +253,7 @@ export default {
       this.compositionForm.id = this.$route.params && this.$route.params.id
       this.compositionForm = Object.assign({}, await this.fetchData(this.compositionForm.id))
     }
-    this.updateState()
+    await this.updateState()
 
     // Why need to make a copy of this.$route here?
     // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
@@ -294,21 +262,21 @@ export default {
   },
   methods: {
     fetchData(id) {
-    return new Promise(resolve => {
-      fetchItem(id).then(response => {
-        // set tagsview title
-        this.setTagsViewTitle()
-        // set page title
-        this.setPageTitle()
+      return new Promise(resolve => {
+        fetchItem(id).then(response => {
+          // set tagsview title
+          this.setTagsViewTitle()
+          // set page title
+          this.setPageTitle()
 
-        resolve(response)
-        setTimeout(() => {
-        }, 1.5 * 1000)
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
       })
-    })
-  },
-    submit() {
-      this.updateState()
+    },
+    async submit() {
+      await this.updateState()
     },
     addTimestamp() {
       this.activityForm = {
@@ -329,7 +297,7 @@ export default {
       this.isTimestampEdit = true
       this.computeActivity(null, this.activityForm, null)
     },
-    submitTimestamp() {
+    async submitTimestamp() {
       if (this.activityForm.timestamp == null || this.activityForm.timestamp === '') {
         this.$message({
           showClose: true,
@@ -383,7 +351,7 @@ export default {
           if (this.activityForm.timestamp === this.compositionForm.activities[i].timestamp) {
             this.compositionForm.activities.splice(i, 1, this.activityForm)
             this.editVisible = false
-            this.updateState()
+            await this.updateState()
             return
           }
         }
@@ -397,7 +365,7 @@ export default {
               message: 'Timestamp duplicated',
               type: 'Error'
             })
-            this.updateState()
+            await this.updateState()
             return
           } else {
             // //////////////////
@@ -419,8 +387,7 @@ export default {
               }
             }
             // check end
-
-            this.updateState()
+            await this.updateState()
             return
           }
         }
@@ -429,17 +396,17 @@ export default {
         // //////////////////
         this.compositionForm.activities.splice(this.compositionForm.activities.length, 0, this.activityForm)
         this.editVisible = false
-        this.updateState()
+        await this.updateState()
       }
     },
     destroyTimestamp(index) {
       this.deleteTimestampForm.index = index
       this.delVisible = true
     },
-    confirmDestroyTimestamp() {
+    async confirmDestroyTimestamp() {
       this.compositionForm.activities.splice(this.deleteTimestampForm.index, 1)
       this.delVisible = false
-      this.updateState()
+      await this.updateState()
     },
     addCompany(item) {
       this.activityForm.companies.push({
@@ -508,35 +475,31 @@ export default {
         }, 1.5 * 1000)
       })
     },
-    updateState() {
-      let msg = this.$message({
-        duration: 0,
-        showClose: false,
-        message: 'Update charts'
-      })
-      calculateComposition(this.compositionForm).then(response => {
-        this.lineChartData = Object.assign({}, response)
-        msg.close()
-      }).then(() => {
-        this.listLoading = true
-        fetchDataframe(this.compositionForm).then(response => {
-          this.listLoading = false
-          this.list = Object.assign([], response)
-          for (const item of this.list) {
-            item.name = this.companyDict[item.ts_code]
-          }
+    async updateState() {
+      return new Promise(resolve => {
+        let msg = this.$message({
+          duration: 0,
+          showClose: false,
+          message: 'Update charts'
         })
-      })
-      .catch(
-        error => {
+        calculateComposition(this.compositionForm).then(response => {
+          this.lineChartData = Object.assign({}, response)
           msg.close()
-          msg = this.$message({
-            showClose: true,
-            message: error,
-            type: 'Error'
-          })
-        }
-      )
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
+        .catch(
+          error => {
+            msg.close()
+            msg = this.$message({
+              showClose: true,
+              message: error.detail,
+              type: 'Error'
+            })
+          }
+        )
+      })
     },
     setTagsViewTitle() {
       const title = 'Edit Composition'

@@ -37,7 +37,7 @@
               <fund-portfolio :ts_code="props.row.ts_code"></fund-portfolio>
             </el-tab-pane>
           </el-tabs> -->
-          <fund-portfolio :ts_code="props.row.ts_code"></fund-portfolio>
+          <fund-portfolio :ts_code="props.row.ts_code" />
         </template>
       </el-table-column>
       <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>

@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-tabs v-model="stockPickingForm.method" @tab-click="handleTabClick">
       <el-tab-pane label="factor" name="factor">
-        <el-form ref="filterForm" label-position="left" label-width="160px" :model="factorForm" style="padding: 0 40px;">
+        <el-form ref="filterForm" label-position="left" label-width="160px" :model="factorForm" style="padding: 0 20px;">
           <el-row :gutter="8">
             <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}" style="padding-right:8px;margin-bottom:30px;">
               <el-button
@@ -15,6 +15,18 @@
                 <el-date-picker
                   :picker-options="datePickerOptions"
                   v-model="factorForm.startTime"
+                  format="yyyy-MM-dd"
+                  value-format="yyyy-MM-dd"
+                  type="date"
+                  aria-required="true"
+                  placeholder="选择日期"
+                >
+                </el-date-picker>
+              </el-form-item>
+              <el-form-item label="结束日期">
+                <el-date-picker
+                  :picker-options="datePickerOptions"
+                  v-model="factorForm.endTime"
                   format="yyyy-MM-dd"
                   value-format="yyyy-MM-dd"
                   type="date"
@@ -60,7 +72,7 @@
       </el-tab-pane>
       <el-tab-pane label="strategy" name="strategy">
         <el-form ref="strategyForm" label-position="left" label-width="160px" :model="strategyForm" style="padding: 0 40px;">
-          <el-form-item label-width="0">
+          <!-- <el-form-item label-width="0">
             <el-tag
               v-for="tag in dynamicTags"
               :key="tag.ts_code"
@@ -81,11 +93,23 @@
               @select="handleSelect($event)"
             ></el-autocomplete>
             <el-button v-else size="mini" @click="showInput">+ New Tag</el-button>
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="开始日期">
             <el-date-picker
               :picker-options="datePickerOptions"
               v-model="strategyForm.startTime"
+              format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd"
+              type="date"
+              aria-required="true"
+              placeholder="选择日期"
+            >
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item label="结束日期">
+            <el-date-picker
+              :picker-options="datePickerOptions"
+              v-model="strategyForm.endTime"
               format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
               type="date"
@@ -108,9 +132,9 @@
       </el-tab-pane>
     </el-tabs>
 
-    <div style="padding: 0 40px;">
+    <div style="padding: 0 20px;">
       <el-button
-        :loading="loading"
+        :disabled="calculateDisabled"
         class="code-button-item"
         type="primary"
         @click.native.prevent="calculateFilter()"
@@ -126,7 +150,7 @@
 
     <hr>
 
-    <composition-detail ref="compositionDetail" :is-edit="false" style="padding:0;" />
+    <strategy-composition-detail ref="compositionDetail" :is-edit="false" :portfolio="portfolio" style="padding:0;" @getAllCompaniesDone="getAllCompaniesDone" />
 
     <!-- 编辑因子弹出框 -->
     <el-dialog :visible.sync="editFactorVisible" title="Select filters">
@@ -171,12 +195,12 @@
 import { fetchItem, createItem, updateItem } from '@/api/stockPicking'
 import { fetchTradeCalender } from '@/api/composition'
 import { fetchAllList as fetchFilterOptionList } from '@/api/filterOption'
-import { fetchAllCompanies } from '@/api/stockBasic'
-import CompositionDetail from '../../composition/components/CompositionDetail'
 import { fetchAllList as fetchStrategyList, factorFilter, strategyFilter } from '@/api/strategy'
 import { Message } from 'element-ui'
+import StrategyCompositionDetail from '../../composition/components/StrategyCompositionDetail'
 
-const start = new Date(new Date().getTime() - 3600 * 1000 * 24 * 365)
+const end = new Date()
+const start = new Date(end.getTime() - 3600 * 1000 * 24 * 365)
 let tradeCalender = []
 const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
   const date = new Date(timestamp)
@@ -204,7 +228,7 @@ const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
 
 export default {
   name: 'StockPickingDetail',
-  components: { CompositionDetail },
+  components: { StrategyCompositionDetail },
   props: {
     isEdit: {
       type: Boolean,
@@ -251,11 +275,13 @@ export default {
         allfund: undefined,
         commission: undefined,
         startTime: formatDate(start, 'yyyy-MM-dd'),
+        endTime: formatDate(end, 'yyyy-MM-dd'),
         filterListString: [],
         filterList: []
       },
       editFactorVisible: false,
       loading: false,
+      calculateDisabled: true,
       datePickerOptions: {
         disabledDate(date) {
           return tradeCalender.indexOf(formatDate(date, 'yyyy-MM-dd')) === -1
@@ -269,6 +295,7 @@ export default {
         allfund: undefined,
         commission: undefined,
         startTime: formatDate(start, 'yyyy-MM-dd'),
+        endTime: formatDate(end, 'yyyy-MM-dd'),
         strategy: undefined,
         ts_code_list: [],
         name_list: []
@@ -292,7 +319,12 @@ export default {
           { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
         ]
       },
-      tempRoute: {}
+      tempRoute: {},
+      portfolio: {
+        df: {},
+        columns: [],
+        path: undefined
+      }
     }
   },
   mounted() {
@@ -305,7 +337,6 @@ export default {
       this.updateState()
     }
 
-    this.getAllCompanies()
     this.getTradeCalender()
     this.getFilterOptions()
     this.getStrategyOptions()
@@ -343,45 +374,62 @@ export default {
       })
     },
     fetchData(id) {
-      fetchItem(id)
-        .then(response => {
-          // set tagsview title
-          this.setTagsViewTitle()
-          // set page title
-          this.setPageTitle()
-          this.stockPickingForm = Object.assign({}, response)
-          if (this.stockPickingForm.method === 'factor') {
-            this.factorForm = Object.assign({}, this.stockPickingForm.filter)
-          } else if (this.stockPickingForm.method === 'strategy') {
-            this.strategyForm = Object.assign({}, this.stockPickingForm.filter)
-            for (var i = 0; i < this.strategyForm.ts_code_list.length; i++) {
-              this.dynamicTags.push({
-                'ts_code': this.strategyForm.ts_code_list[i],
-                'name': this.strategyForm.name_list[i]
-              })
-            }
+      fetchItem(id).then(response => {
+        // set tagsview title
+        this.setTagsViewTitle()
+        // set page title
+        this.setPageTitle()
+        this.stockPickingForm = Object.assign({}, response)
+        if (this.stockPickingForm.method === 'factor') {
+          this.factorForm = Object.assign({}, this.stockPickingForm.filter)
+        } else if (this.stockPickingForm.method === 'strategy') {
+          this.strategyForm = Object.assign({}, this.stockPickingForm.filter)
+          for (var i = 0; i < this.strategyForm.ts_code_list.length; i++) {
+            this.dynamicTags.push({
+              'ts_code': this.strategyForm.ts_code_list[i],
+              'name': this.strategyForm.name_list[i]
+            })
           }
-          this.updateState()
-        })
+        }
+        this.updateState()
+      })
     },
-    calculateFilter() {
+    async calculateFilter() {
       if (this.stockPickingForm.method === 'factor') {
+        this.calculateDisabled = true
         this.factorForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
         this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
         factorFilter(this.factorForm)
-          .then(response => {
-            this.$message.success('Filtered successfully!')
+          .then(async response => {
+            const msg = this.$message.success('Filtered successfully!')
+            this.portfolio = {
+              df: {},
+              columns: [],
+              path: undefined
+            }
+            msg.close()
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
-            this.$refs.compositionDetail.updateState()
+            await this.$refs.compositionDetail.updateState()
+            this.calculateDisabled = false
+          })
+          .catch(() => {
+            this.calculateDisabled = false
           })
       } else if (this.stockPickingForm.method === 'strategy') {
+        this.calculateDisabled = true
         this.strategyForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
         this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
         strategyFilter(this.strategyForm)
-          .then(response => {
-            this.$message.success('Filtered successfully!')
+          .then(async response => {
+            const msg = this.$message.success('Filtered successfully!')
+            this.portfolio = Object.assign({}, response)
+            msg.close()
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
-            this.$refs.compositionDetail.updateState()
+            await this.$refs.compositionDetail.updateState()
+            this.calculateDisabled = false
+          })
+          .catch(() => {
+            this.calculateDisabled = false
           })
       }
     },
@@ -515,23 +563,6 @@ export default {
         return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
       }
     },
-    getAllCompanies() {
-      this.listLoading = true
-      fetchAllCompanies().then(response => {
-        this.listLoading = false
-        this.companies = []
-        for (const item of response) {
-          this.companies.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
     handleClose(tag) {
       this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
       this.strategyForm.ts_code_list.splice(this.dynamicTags.indexOf(tag), 1)
@@ -579,6 +610,9 @@ export default {
       this.$nextTick(_ => {
         this.$refs.saveTagInput.$refs.input.focus()
       })
+    },
+    getAllCompaniesDone(data) {
+      this.calculateDisabled = false
     }
   }
 }

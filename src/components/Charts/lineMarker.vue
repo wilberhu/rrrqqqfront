@@ -170,6 +170,13 @@ export default {
               label: {
                 normal: {
                   formatter: function(param) {
+
+
+
+
+
+
+
                     return param != null ? Math.round(param.value) : ''
                   }
                 }

@@ -107,8 +107,8 @@
             :picker-options="datePickerOptions"
             :readonly="isTimestampEdit?'readonly':false"
             v-model="activityForm.timestamp"
-            format="yyyy-MM-dd"
-            value-format="yyyy-MM-dd"
+            format="yyyyMMdd"
+            value-format="yyyyMMdd"
             type="date"
             aria-required="true"
             placeholder="选择日期"
@@ -190,7 +190,8 @@ import StackLineChart from './StackLineChart'
 import { parseTime } from '@/utils'
 
 let tradeCalender = []
-const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
+// const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
+const formatDate = function(timestamp, format = 'yyyyMMdd') {
   const date = new Date(timestamp)
   const o = {
     'y+': date.getFullYear(),
@@ -234,8 +235,8 @@ export default {
         id: undefined,
         name: 'composition',
         description: undefined,
-        allfund: 100000,
-        commission: 0,
+        allfund: 100000000,
+        commission: 0.0001,
         activities: []
       },
       activityForm: {
@@ -262,7 +263,7 @@ export default {
       saveCompositionVisible: false,
       datePickerOptions: {
         disabledDate(date) {
-          return tradeCalender.indexOf(formatDate(date, 'yyyy-MM-dd')) === -1
+          return tradeCalender.indexOf(formatDate(date, 'yyyyMMdd')) === -1
         }
       },
       rules: {

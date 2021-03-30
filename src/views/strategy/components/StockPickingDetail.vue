@@ -15,8 +15,8 @@
                 <el-date-picker
                   :picker-options="datePickerOptions"
                   v-model="factorForm.startTime"
-                  format="yyyy-MM-dd"
-                  value-format="yyyy-MM-dd"
+                  format="yyyyMMdd"
+                  value-format="yyyyMMdd"
                   type="date"
                   aria-required="true"
                   placeholder="选择日期"
@@ -27,8 +27,8 @@
                 <el-date-picker
                   :picker-options="datePickerOptions"
                   v-model="factorForm.endTime"
-                  format="yyyy-MM-dd"
-                  value-format="yyyy-MM-dd"
+                  format="yyyyMMdd"
+                  value-format="yyyyMMdd"
                   type="date"
                   aria-required="true"
                   placeholder="选择日期"
@@ -98,8 +98,8 @@
             <el-date-picker
               :picker-options="datePickerOptions"
               v-model="strategyForm.startTime"
-              format="yyyy-MM-dd"
-              value-format="yyyy-MM-dd"
+              format="yyyyMMdd"
+              value-format="yyyyMMdd"
               type="date"
               aria-required="true"
               placeholder="选择日期"
@@ -110,8 +110,8 @@
             <el-date-picker
               :picker-options="datePickerOptions"
               v-model="strategyForm.endTime"
-              format="yyyy-MM-dd"
-              value-format="yyyy-MM-dd"
+              format="yyyyMMdd"
+              value-format="yyyyMMdd"
               type="date"
               aria-required="true"
               placeholder="选择日期"
@@ -202,7 +202,8 @@ import StrategyCompositionDetail from '../../composition/components/StrategyComp
 const end = new Date()
 const start = new Date(end.getTime() - 3600 * 1000 * 24 * 365)
 let tradeCalender = []
-const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
+// const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
+const formatDate = function(timestamp, format = 'yyyyMMdd') {
   const date = new Date(timestamp)
   const o = {
     'y+': date.getFullYear(),
@@ -274,8 +275,8 @@ export default {
       factorForm: {
         allfund: undefined,
         commission: undefined,
-        startTime: formatDate(start, 'yyyy-MM-dd'),
-        endTime: formatDate(end, 'yyyy-MM-dd'),
+        startTime: formatDate(start, 'yyyyMMdd'),
+        endTime: formatDate(end, 'yyyyMMdd'),
         filterListString: [],
         filterList: []
       },
@@ -284,7 +285,7 @@ export default {
       calculateDisabled: true,
       datePickerOptions: {
         disabledDate(date) {
-          return tradeCalender.indexOf(formatDate(date, 'yyyy-MM-dd')) === -1
+          return tradeCalender.indexOf(formatDate(date, 'yyyyMMdd')) === -1
         }
       },
       filterMethod(query, item) {
@@ -294,8 +295,8 @@ export default {
       strategyForm: {
         allfund: undefined,
         commission: undefined,
-        startTime: formatDate(start, 'yyyy-MM-dd'),
-        endTime: formatDate(end, 'yyyy-MM-dd'),
+        startTime: formatDate(start, 'yyyyMMdd'),
+        endTime: formatDate(end, 'yyyyMMdd'),
         strategy: undefined,
         ts_code_list: [],
         name_list: []
@@ -399,36 +400,56 @@ export default {
         this.calculateDisabled = true
         this.factorForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
         this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
+        const msg = this.$message({
+          duration: 0,
+          showClose: false,
+          message: 'Processing'
+        })
         factorFilter(this.factorForm)
           .then(async response => {
-            const msg = this.$message.success('Filtered successfully!')
+            msg.close()
             this.portfolio = {
               df: {},
               columns: [],
               path: undefined
             }
-            msg.close()
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             await this.$refs.compositionDetail.updateState()
             this.calculateDisabled = false
           })
-          .catch(() => {
+          .catch(error => {
+            msg.close()
+            this.$message({
+              showClose: true,
+              message: error,
+              type: 'Error'
+            })
             this.calculateDisabled = false
           })
       } else if (this.stockPickingForm.method === 'strategy') {
         this.calculateDisabled = true
         this.strategyForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
         this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
+        const msg = this.$message({
+          duration: 0,
+          showClose: false,
+          message: 'Processing'
+        })
         strategyFilter(this.strategyForm)
           .then(async response => {
-            const msg = this.$message.success('Filtered successfully!')
-            this.portfolio = Object.assign({}, response)
             msg.close()
+            this.portfolio = Object.assign({}, response)
             this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
             await this.$refs.compositionDetail.updateState()
             this.calculateDisabled = false
           })
-          .catch(() => {
+          .catch(error => {
+            msg.close()
+            this.$message({
+              showClose: true,
+              message: error,
+              type: 'Error'
+            })
             this.calculateDisabled = false
           })
       }
@@ -496,9 +517,11 @@ export default {
           if (this.stockPickingForm.method === 'factor') {
             this.stockPickingForm.filter = Object.assign({}, this.factorForm)
             this.stockPickingForm.start_time = this.factorForm.startTime
+            this.stockPickingForm.end_time = this.factorForm.endTime
           } else if (this.stockPickingForm.method === 'strategy') {
             this.stockPickingForm.filter = Object.assign({}, this.strategyForm)
             this.stockPickingForm.start_time = this.strategyForm.startTime
+            this.stockPickingForm.end_time = this.strategyForm.endTime
           }
           if (this.isEdit) {
             updateItem(this.stockPickingForm.id, this.stockPickingForm)

@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div class="filter-container" v-if="Object.keys(this.portfolio.df).length > 0">
+    <div class="filter-container" v-if="Object.keys(this.portfolio.group_data).length > 0">
       <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
         Export
       </el-button>
     </div>
     <el-tabs v-model="activeName" @tab-click="handleTabClick">
-      <el-tab-pane :label="date" :name="date" v-for="(portfolio, date) in portfolio.df" :key="date">
+      <el-tab-pane :label="date" :name="date" v-for="(portfolio, date) in portfolio.group_data" :key="date">
         <el-table
           :ref="'portfolioTable'+date"
           :key="paging[date].tableKey"
@@ -56,7 +56,7 @@ export default {
     portfolio: {
       type: Object,
       default: {
-        df: {},
+        group_data: {},
         columns: [],
         path: undefined
       }
@@ -99,12 +99,12 @@ export default {
       this.handleSizeChange(tab.name)
     },
     getList(val) {
-      const dateList = Object.keys(val.df)
+      const dateList = Object.keys(val.group_data)
       this.activeName = dateList[dateList.length - 1]
 
       for (const date of dateList) {
         this.paging[date] = {
-          total: this.portfolio.df[date].count,
+          total: this.portfolio.group_data[date].count,
           page: 1,
           tableKey: Number(date) * 100
         }
@@ -113,8 +113,8 @@ export default {
       this.handleSizeChange(this.activeName)
     },
     handleSizeChange(date) {
-      if (this.portfolio.df.hasOwnProperty(date)) {
-        this.tmpList = this.portfolio.df[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit)
+      if (this.portfolio.group_data.hasOwnProperty(date)) {
+        this.tmpList = this.portfolio.group_data[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit)
       } else {
         this.tmpList = []
       }

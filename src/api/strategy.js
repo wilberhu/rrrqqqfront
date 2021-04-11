@@ -55,32 +55,6 @@ export function deleteItem(id) {
   })
 }
 
-export function fetchStrategyCompare(code) {
-  return request({
-    url: '/api/strategy_data/',
-    method: 'post',
-    data: {
-      code
-    }
-  })
-}
-
-export function factorFilter(data) {
-  return request({
-    url: '/api/factor_filter/',
-    method: 'post',
-    data
-  })
-}
-
-export function strategyFilter(data) {
-  return request({
-    url: '/api/strategy_filter/',
-    method: 'post',
-    data
-  })
-}
-
 export function fetchStrategyPortfolioDownload(path) {
   return axios({
     url: '/api/strategies/portfolio/' + path.split('strategies/portfolio/')[1],

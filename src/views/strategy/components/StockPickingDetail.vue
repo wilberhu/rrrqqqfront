@@ -137,13 +137,6 @@
         :disabled="calculateDisabled"
         class="code-button-item"
         type="primary"
-        @click.native.prevent="calculateFilter()"
-      >Calculate</el-button>
-
-      <el-button
-        :loading="loading"
-        class="code-button-item"
-        type="primary"
         @click.native.prevent="saveStockPickingVisible=true"
       >Save StockPicking</el-button>
     </div>
@@ -311,6 +304,7 @@ export default {
         name: undefined,
         description: undefined,
         start_time: undefined,
+        end_time: undefined,
         method: 'factor',
         filter: {}
       },
@@ -322,7 +316,7 @@ export default {
       },
       tempRoute: {},
       portfolio: {
-        df: {},
+        group_data: {},
         columns: [],
         path: undefined
       }
@@ -375,7 +369,8 @@ export default {
       })
     },
     fetchData(id) {
-      fetchItem(id).then(response => {
+      this.calculateDisabled = true
+      fetchItem(id).then(async response => {
         // set tagsview title
         this.setTagsViewTitle()
         // set page title
@@ -392,67 +387,12 @@ export default {
             })
           }
         }
+        this.portfolio = Object.assign({}, response.result)
+        this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.result.activities)
+        // await this.$refs.compositionDetail.updateState()
+        this.calculateDisabled = false
         this.updateState()
       })
-    },
-    async calculateFilter() {
-      if (this.stockPickingForm.method === 'factor') {
-        this.calculateDisabled = true
-        this.factorForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
-        this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
-        const msg = this.$message({
-          duration: 0,
-          showClose: false,
-          message: 'Processing'
-        })
-        factorFilter(this.factorForm)
-          .then(async response => {
-            msg.close()
-            this.portfolio = {
-              df: {},
-              columns: [],
-              path: undefined
-            }
-            this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
-            await this.$refs.compositionDetail.updateState()
-            this.calculateDisabled = false
-          })
-          .catch(error => {
-            msg.close()
-            this.$message({
-              showClose: true,
-              message: error,
-              type: 'Error'
-            })
-            this.calculateDisabled = false
-          })
-      } else if (this.stockPickingForm.method === 'strategy') {
-        this.calculateDisabled = true
-        this.strategyForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
-        this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
-        const msg = this.$message({
-          duration: 0,
-          showClose: false,
-          message: 'Processing'
-        })
-        strategyFilter(this.strategyForm)
-          .then(async response => {
-            msg.close()
-            this.portfolio = Object.assign({}, response)
-            this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.activities)
-            await this.$refs.compositionDetail.updateState()
-            this.calculateDisabled = false
-          })
-          .catch(error => {
-            msg.close()
-            this.$message({
-              showClose: true,
-              message: error,
-              type: 'Error'
-            })
-            this.calculateDisabled = false
-          })
-      }
     },
     makeFilterListChecked() {
       this.factorForm.filterListString = []
@@ -511,63 +451,79 @@ export default {
       const title = 'Edit Stock Picking'
       document.title = `${title} - ${this.stockPickingForm.id}`
     },
-    saveStockPicking(formName) {
+    async saveStockPicking(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           if (this.stockPickingForm.method === 'factor') {
+            this.calculateDisabled = true
+
+            this.factorForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
+            this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
+
             this.stockPickingForm.filter = Object.assign({}, this.factorForm)
             this.stockPickingForm.start_time = this.factorForm.startTime
             this.stockPickingForm.end_time = this.factorForm.endTime
           } else if (this.stockPickingForm.method === 'strategy') {
+            this.calculateDisabled = true
+
+            this.strategyForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
+            this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
+
             this.stockPickingForm.filter = Object.assign({}, this.strategyForm)
             this.stockPickingForm.start_time = this.strategyForm.startTime
             this.stockPickingForm.end_time = this.strategyForm.endTime
           }
           if (this.isEdit) {
+            this.saveStockPickingVisible = false
+
+            const msg = this.$message({
+              duration: 0,
+              showClose: false,
+              message: 'Processing'
+            })
             updateItem(this.stockPickingForm.id, this.stockPickingForm)
-              .then(
-                response => {
-                  this.stockPickingForm = Object.assign({}, response)
-                  this.$message({
-                    message: 'Successful saved stock picking',
-                    type: 'Success'
-                  })
-                  this.saveStockPickingVisible = false
-                }
-              )
-              .catch(
-                error => {
-                  this.$message({
-                    showClose: true,
-                    message: error,
-                    type: 'Error'
-                  })
-                }
-              )
+              .then(async response => {
+                msg.close()
+                this.portfolio = Object.assign({}, response.result)
+                this.$refs.compositionDetail.compositionForm.activities = Object.assign([], response.result.activities)
+                await this.$refs.compositionDetail.updateState()
+                this.calculateDisabled = false
+              })
+              .catch(error => {
+                msg.close()
+                this.$message({
+                  showClose: true,
+                  message: error,
+                  type: 'Error'
+                })
+                this.calculateDisabled = false
+              })
           } else {
+            this.saveStockPickingVisible = false
+
+            const msg = this.$message({
+              duration: 0,
+              showClose: false,
+              message: 'Processing'
+            })
             createItem(this.stockPickingForm)
-              .then(
-                response => {
-                  this.stockPickingForm = Object.assign({}, response)
-                  this.$message({
-                    message: 'Successful saved stock picking',
-                    type: 'Success'
-                  })
-                  this.saveStockPickingVisible = false
-                  this.$router.push({
-                    path: '/strategy/edit_stock_picking/' + this.stockPickingForm.id
-                  })
-                }
-              )
-              .catch(
-                error => {
-                  this.$message({
-                    showClose: true,
-                    message: error,
-                    type: 'Error'
-                  })
-                }
-              )
+              .then(async response => {
+                this.stockPickingForm = Object.assign({}, response)
+                this.$router.push({
+                  path: '/strategy/edit_stock_picking/' + this.stockPickingForm.id
+                })
+
+                msg.close()
+              })
+              .catch(error => {
+                msg.close()
+                this.$message({
+                  showClose: true,
+                  message: error,
+                  type: 'Error'
+                })
+                this.calculateDisabled = false
+              })
           }
         }
       })

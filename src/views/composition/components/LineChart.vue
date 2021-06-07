@@ -7,7 +7,6 @@ import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from '../../../components/Charts/mixins/resize'
 
-let chartDataGlobal = {}
 export default {
   mixins: [resize],
   props: {
@@ -41,6 +40,10 @@ export default {
     chartData: {
       type: Object,
       required: true
+    },
+    benchmark: {
+      type: Array,
+      required: true
     }
   },
   data() {
@@ -53,13 +56,23 @@ export default {
     chartData: {
       deep: true,
       handler(val) {
-        chartDataGlobal = Object.assign({}, val)
         if (this.chart) {
           this.chart.dispose()
           this.chart = null
         }
         this.initChart()
-        this.setOptions(val)
+        this.setOptions(val, this.benchmark)
+      }
+    },
+    benchmark: {
+      deep: true,
+      handler(val) {
+        if (this.chart) {
+          this.chart.dispose()
+          this.chart = null
+        }
+        this.initChart()
+        this.setOptions(this.chartData, val)
       }
     }
   },
@@ -79,10 +92,11 @@ export default {
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
     },
-    makeGridData(chartData) {
+    makeGridData(chartData, benchmark) {
       const ret = []
       ret.push(
         echarts.util.merge({
+          yAxisIndex: 0,
           name: chartData.codeList ? chartData.codeList[0] : '',
           type: 'line',
           smooth: false,
@@ -90,9 +104,18 @@ export default {
           data: chartData.codeList ? chartData.data[0] : ''
         })
       )
+      ret.push(
+        echarts.util.merge({
+          yAxisIndex: 1,
+          type: 'line',
+          smooth: false,
+          hoverAnimation: false,
+          data: benchmark
+        })
+      )
       return ret
     },
-    setOptions(chartData) {
+    setOptions(chartData, benchmark) {
       this.chart.setOption({
         title: {
           text: '收益曲线',
@@ -151,9 +174,14 @@ export default {
             name: '收益',
             type: 'value',
             scale: true
+          },
+          {
+            name: 'benchmark',
+            type: 'value',
+            scale: true
           }
         ],
-        series: this.makeGridData(chartData)
+        series: this.makeGridData(chartData, benchmark)
       })
     }
   }

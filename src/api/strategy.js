@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import { getToken } from '@/utils/auth'
-import axios from "axios";
+import axios from 'axios'
 
 export function fetchList(query) {
   return request({
@@ -32,6 +32,13 @@ export function fetchItemCode(id) {
   })
 }
 
+export function fetchItemParam(id) {
+  return request({
+    url: '/api/strategies/' + id + '/param/',
+    method: 'get'
+  })
+}
+
 export function createItem(data) {
   return request({
     url: '/api/strategies/',
@@ -57,10 +64,10 @@ export function deleteItem(id) {
 
 export function fetchStrategyPortfolioDownload(path) {
   return axios({
-    url: '/api/strategies/portfolio/' + path.split('strategies/portfolio/')[1],
+    url: '/api/strategies/portfolio/' + path,
     method: 'get',
-    headers:{
-      Authorization: 'Bearer ' + getToken(),
+    headers: {
+      Authorization: 'Bearer ' + getToken()
     }
   })
 }

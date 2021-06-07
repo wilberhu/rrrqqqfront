@@ -119,7 +119,7 @@
             </el-date-picker>
           </el-form-item>
           <el-form-item label="策略">
-            <el-select v-model="strategyForm.strategy" placeholder="请选择">
+            <el-select v-model="strategyForm.strategy" placeholder="请选择" @change="getStrategyParam">
               <el-option
                 v-for="item in strategyOptions"
                 :key="item.id"
@@ -127,6 +127,13 @@
                 :value="item.id">
               </el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="参数">
+            <template v-for="(value, key) in paramDict" style="white-space: nowrap;">
+              <el-input :key="key" placeholder="value" v-model="paramDict[key]" style="margin-right: 10px; width: 140px;">
+                <template slot="prepend">{{ key }}</template>
+              </el-input>
+            </template>
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -188,7 +195,7 @@
 import { fetchItem, createItem, updateItem } from '@/api/stockPicking'
 import { fetchTradeCalender } from '@/api/composition'
 import { fetchAllList as fetchFilterOptionList } from '@/api/filterOption'
-import { fetchAllList as fetchStrategyList, factorFilter, strategyFilter } from '@/api/strategy'
+import { fetchAllList as fetchStrategyList, fetchItemParam as fetchStrategyParam } from '@/api/strategy'
 import { Message } from 'element-ui'
 import StrategyCompositionDetail from '../../composition/components/StrategyCompositionDetail'
 
@@ -319,7 +326,8 @@ export default {
         group_data: {},
         columns: [],
         path: undefined
-      }
+      },
+      paramDict: {}
     }
   },
   mounted() {
@@ -380,6 +388,7 @@ export default {
           this.factorForm = Object.assign({}, this.stockPickingForm.filter)
         } else if (this.stockPickingForm.method === 'strategy') {
           this.strategyForm = Object.assign({}, this.stockPickingForm.filter)
+          this.paramDict = Object.assign({}, this.strategyForm.param)
           for (var i = 0; i < this.strategyForm.ts_code_list.length; i++) {
             this.dynamicTags.push({
               'ts_code': this.strategyForm.ts_code_list[i],
@@ -481,6 +490,7 @@ export default {
               showClose: false,
               message: 'Processing'
             })
+            this.stockPickingForm.filter.param = Object.assign({}, this.paramDict)
             updateItem(this.stockPickingForm.id, this.stockPickingForm)
               .then(async response => {
                 msg.close()
@@ -506,8 +516,10 @@ export default {
               showClose: false,
               message: 'Processing'
             })
+            this.stockPickingForm.filter.param = Object.assign({}, this.paramDict)
             createItem(this.stockPickingForm)
               .then(async response => {
+                this.portfolio = Object.assign({}, response.result)
                 this.stockPickingForm = Object.assign({}, response)
                 this.$router.push({
                   path: '/strategy/edit_stock_picking/' + this.stockPickingForm.id
@@ -592,6 +604,11 @@ export default {
     },
     getAllCompaniesDone(data) {
       this.calculateDisabled = false
+    },
+    getStrategyParam(id) {
+      fetchStrategyParam(id).then(response => {
+        this.paramDict = Object.assign({}, response)
+      })
     }
   }
 }

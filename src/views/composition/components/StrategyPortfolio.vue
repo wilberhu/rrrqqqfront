@@ -129,7 +129,6 @@ export default {
     },
     handleDownload() {
       fetchStrategyPortfolioDownload(this.portfolio.path).then(response => {
-        console.log(this.portfolio.path)
         const fileURL = window.URL.createObjectURL(new Blob([response.data]))
         const fileLink = document.createElement('a')
         fileLink.href = fileURL

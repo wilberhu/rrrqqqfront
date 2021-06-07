@@ -49,8 +49,31 @@
           >Save Composition</el-button>
         </el-col>
         <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
+          <el-row v-show="lineChartData.timestamp.length>0">
+            <el-form-item label="Benchmark" label-width="120px" style="margin-left: 20px;">
+              <el-autocomplete
+                v-model="benchmarkForm.ts_code"
+                :fetch-suggestions="querySearchAsyncBenchmark"
+                placeholder="请输入内容"
+                style="width: 220px;"
+                @select="handleSelectBenchmark($event)"
+              >
+                <template slot="suffix">{{ benchmarkForm.name }}</template>
+              </el-autocomplete>
+            </el-form-item>
+          </el-row>
+          <el-row v-show="lineChartData.timestamp.length>0">
+            <el-form-item label="Company" label-width="120px" style="margin-left: 20px;">
+              <el-cascader
+                placeholder="Search"
+                :options="companyOptions"
+                :props="{ checkStrictly: false }"
+                @change="handleSelectCompany($event)"
+                filterable></el-cascader>
+            </el-form-item>
+          </el-row>
           <el-row>
-            <line-chart :chart-data="lineChartData" />
+            <line-chart :chart-data="lineChartData" :benchmark="benchmarkData"/>
           </el-row>
         </el-col>
       </el-row>
@@ -147,10 +170,10 @@
 </template>
 
 <script>
-import { fetchAllCompanies } from '@/api/stockBasic'
+import { fetchAllCompanies, fetchAllIndexes } from '@/api/stockBasic'
+import { getIndexHistData, getCompanyHistData } from '@/api/histData'
 import { calculateComposition, calculateActivity, fetchItem, createItem, updateItem, fetchTradeCalender } from '@/api/composition'
 import LineChart from './LineChart'
-import { parseTime } from '@/utils'
 import StrategyPortfolio from './StrategyPortfolio'
 
 let tradeCalender = []
@@ -217,13 +240,25 @@ export default {
       deleteTimestampForm: {
         index: undefined
       },
+      benchmarkForm: {
+        ts_code: undefined,
+        name: undefined,
+        type: 'index',
+        histData: null,
+        maData: null
+      },
+      benchmarkData: [],
+      benchmarkDatalist: {
+        company: [],
+        index: [],
+        fund: []
+      },
       reverse: true,
       lineChartData: {
         timestamp: [],
         codeList: [],
         data: []
       },
-      list: [],
       downloadLoading: false,
       editVisible: false,
       isTimestampEdit: false,
@@ -240,10 +275,12 @@ export default {
           { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
         ]
       },
-      tempRoute: {}
+      tempRoute: {},
+      companyOptions: []
     }
   },
   mounted() {
+    this.getAllIndexes()
   },
   async created() {
     await this.getAllCompanies()
@@ -254,6 +291,7 @@ export default {
       this.compositionForm.id = this.$route.params && this.$route.params.id
       this.compositionForm = Object.assign({}, await this.fetchData(this.compositionForm.id))
     }
+    this.updateCompanyOptions()
     await this.updateState()
 
     // Why need to make a copy of this.$route here?
@@ -489,8 +527,7 @@ export default {
           resolve(response)
           setTimeout(() => {
           }, 1.5 * 1000)
-        })
-        .catch(
+        }).catch(
           error => {
             msg.close()
             msg = this.$message({
@@ -563,32 +600,109 @@ export default {
         }
       })
     },
-    handleDownload() {
-      this.downloadLoading = true
-      import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['trade_date', 'ts_code', 'name', 'share', 'open']
-        const filterVal = ['trade_date', 'ts_code', 'name', 'share', 'open']
-        const data = this.formatJson(filterVal, this.list)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: this.compositionForm.name,
-          autoWidth: true,
-          bookType: 'csv'
-        })
-        this.downloadLoading = false
+    getAllIndexes() {
+      this.listLoading = true
+      fetchAllIndexes().then(response => {
+        this.listLoading = false
+        this.benchmarkDatalist.index = []
+        for (const item of response) {
+          this.benchmarkDatalist.index.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
       })
     },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map(v => filterVal.map(j => {
-        if (j === 'trade_date') {
-          return parseTime(v[j])
-        } else if (j === 'name') {
-          return this.companyDict[v['ts_code']]
-        } else {
-          return v[j]
+    querySearchAsyncBenchmark(queryString, cb) {
+      var results = queryString ? this.benchmarkDatalist['index'].filter(this.createContainsFilter(queryString)) : this.benchmarkDatalist['index']
+      clearTimeout(this.timeout)
+      this.timeout = setTimeout(() => {
+        cb(results)
+      }, 0)
+    },
+    handleSelectBenchmark(event) {
+      this.benchmarkForm.ts_code = event.ts_code
+      this.benchmarkForm.name = event.name
+      this.benchmarkForm.type = 'index'
+      this.drawCharts()
+    },
+    drawCharts() {
+      if (this.benchmarkForm.ts_code) {
+        if (this.benchmarkForm.type === 'index') {
+          getIndexHistData(this.benchmarkForm.ts_code).then(response => {
+            this.benchmarkForm.name = response.name
+            this.benchmarkForm.histData = response.hist_data
+            this.benchmarkForm.maData = response.ma_data
+
+            const indexDate = []
+            const indexCloseData = []
+            for (const item of this.benchmarkForm.histData) {
+              indexDate.push(item[0])
+              indexCloseData.push(item[2])
+            }
+
+            this.benchmarkData = []
+            for (const item of this.lineChartData.timestamp) {
+              const tmpIndex = indexDate.indexOf(item)
+              if (tmpIndex !== -1) {
+                this.benchmarkData.push(indexCloseData[tmpIndex])
+              } else {
+                this.benchmarkData.push('')
+              }
+            }
+          })
+        } else if (this.benchmarkForm.type === 'company') {
+          getCompanyHistData(this.benchmarkForm.ts_code).then(response => {
+            this.benchmarkForm.name = response.name
+            this.benchmarkForm.histData = response.hist_data
+            this.benchmarkForm.maData = response.ma_data
+
+            const indexDate = []
+            const indexCloseData = []
+            for (const item of this.benchmarkForm.histData) {
+              indexDate.push(item[0])
+              indexCloseData.push(item[2])
+            }
+
+            this.benchmarkData = []
+            for (const item of this.lineChartData.timestamp) {
+              const tmpIndex = indexDate.indexOf(item)
+              if (tmpIndex !== -1) {
+                this.benchmarkData.push(indexCloseData[tmpIndex])
+              } else {
+                this.benchmarkData.push('')
+              }
+            }
+          })
         }
-      }))
+      }
+    },
+    updateCompanyOptions() {
+      this.companyOptions = []
+      for (const item of this.compositionForm.activities) {
+        const children = []
+        for (const company of item.companies) {
+          children.push({
+            value: company.ts_code,
+            label: company.ts_code + ' - ' + this.companyDict[company.ts_code]
+          })
+        }
+        this.companyOptions.push({
+          value: item.timestamp,
+          label: item.timestamp,
+          children: children
+        })
+      }
+    },
+    handleSelectCompany(event) {
+      this.benchmarkForm.ts_code = event[1]
+      this.benchmarkForm.name = this.companyDict[event[1]]
+      this.benchmarkForm.type = 'company'
+      this.drawCharts()
     }
   }
 }

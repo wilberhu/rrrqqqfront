@@ -24,9 +24,7 @@
       </el-table-column>
       <el-table-column align="center" prop="title" sortable label="Key">
         <template slot-scope="scope">
-          <router-link :to="'/strategy/edit/'+scope.row.id" class="link-type">
-            <span>{{ scope.row.key }}</span>
-          </router-link>
+          <a @click="handleUpdate(scope.row)">{{ scope.row.key }}</a>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="created" sortable label="Label">

@@ -222,6 +222,12 @@ export const constantRoutes = [
         name: 'EditStockPicking',
         meta: { title: 'edit_stock_picking', noCache: true },
         hidden: true
+      },
+      {
+        path: 'stock_list',
+        component: () => import('@/views/strategy/select_list/stock'),
+        name: 'StockList',
+        meta: { title: 'stock_list', icon: 'list' }
       }
     ]
   },
@@ -252,7 +258,7 @@ export const constantRoutes = [
         path: 'edit/:id(\\d+)',
         component: () => import('@/views/composition/edit'),
         name: 'EditComposition',
-        meta: { title: 'edit_composition', activeMenu: '/composition/list'  },
+        meta: { title: 'edit_composition', activeMenu: '/composition/list' },
         hidden: true
       }
     ]

@@ -22,7 +22,7 @@ export default {
     create_stock_picking: 'Create Stock Picking',
     edit_stock_picking: 'Edit Stock Picking',
     strategy_result: 'Strategy Result',
-    strategy_compare: 'Strategy Compare',
+    stock_list: 'Stock List',
     composition: 'Composition',
     composition_list: 'Composition List',
     create_composition: 'Create Composition',

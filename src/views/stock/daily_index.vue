@@ -1,12 +1,21 @@
 <template>
   <div>
-    <div class="filter-container">
-      <el-input placeholder="ts_code" v-model="listQuery.search" style="width: 200px;" class="filter-item" @keyup.enter.native="handleSearch"/>
-      <!-- <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleSearch">
-        <el-option v-for="item in orderingOptions" :key="item.key" :label="item.label" :value="item.key"/>
-      </el-select> -->
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">{{ $t('table.search') }}</el-button>
-    </div>
+    <el-form ref="form" :inline="true" :model="form">
+      <el-form-item>
+        <el-autocomplete
+          v-model="form.ts_code"
+          :fetch-suggestions="querySearchAsync"
+          placeholder="请输入内容"
+          style="width: 220px;"
+          clearable
+          @select="handleSelect($event)"
+          @clear="handleClear($event)"
+          @input="handleInput($event)"
+        >
+          <template slot="suffix">{{ form.name }}</template>
+        </el-autocomplete>
+      </el-form-item>
+    </el-form>
     <el-table
       v-loading="listLoading"
       ref="multipleTable"
@@ -111,6 +120,7 @@
 </template>
 
 <script>
+import { fetchAllIndexes } from '@/api/stockBasic'
 import { fetchIndexList } from '@/api/stockDaily'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
@@ -147,14 +157,22 @@ export default {
         limit: 20,
         offset: undefined,
         ordering: undefined,
-        search: undefined
+        ts_code: undefined
       },
       orderingOptions: [{ label: 'TsCode Ascending', key: 'ts_code' },
         { label: 'TsCode Descending', key: '-ts_code' },
         { label: 'Name Ascending', key: 'name' },
         { label: 'Name Descending', key: '-name' }],
 
-      multipleSelection: []
+      multipleSelection: [],
+      form: {
+        ts_code: undefined,
+        name: undefined,
+        type: 'index'
+      },
+      datalist: {
+        index: []
+      }
     }
   },
   computed: {
@@ -174,6 +192,7 @@ export default {
   },
   created() {
     this.getList()
+    this.getAllIndexes()
   },
   methods: {
     drawLine(item) {
@@ -200,9 +219,47 @@ export default {
         }, 1.5 * 1000)
       })
     },
-    handleSearch() {
-      this.page = 1
+    querySearchAsync(queryString, cb) {
+      var results = queryString ? this.datalist[this.form.type].filter(this.createContainsFilter(queryString)) : this.datalist[this.form.type]
+      clearTimeout(this.timeout)
+      this.timeout = setTimeout(() => {
+        cb(results)
+      }, 0)
+    },
+    createContainsFilter(queryString) {
+      return (company) => {
+        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
+      }
+    },
+    handleSelect(event) {
+      this.listQuery.ts_code = event.ts_code
       this.getList()
+    },
+    handleClear(event) {
+      this.listQuery.ts_code = undefined
+      this.getList()
+    },
+    handleInput(event) {
+      if(event==='') {
+        this.handleClear()
+      }
+    },
+    getAllIndexes() {
+      this.listLoading = true
+      fetchAllIndexes().then(response => {
+        this.listLoading = false
+        this.datalist.index = []
+        for (const item of response) {
+          this.datalist.index.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
     },
     sortChange(data) {
       const { prop, order } = data
@@ -216,7 +273,8 @@ export default {
       } else {
         this.listQuery.ordering = undefined
       }
-      this.handleSearch()
+      this.page = 1
+      this.getList()
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows

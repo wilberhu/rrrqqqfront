@@ -101,7 +101,7 @@ export default {
   data() {
     return {
       listLoading: true,
-      typeOptions: ['company', 'index'],
+      typeOptions: ['company', 'index', 'fund'],
       typeList: ['company'],
       datalist: {
         company: [],
@@ -116,8 +116,6 @@ export default {
         timeLine: [],
         closeData: []
       },
-      // select_codes: [],
-      // codes_option: []
       dynamicTags: {
         company: [],
         index: [],

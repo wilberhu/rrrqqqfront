@@ -44,16 +44,18 @@ export default {
       var ret = []
       var type_list = Array.from(new Set(this.form.type_list))
       for (var i = 0; i < this.form.ts_code_list.length; i++) {
-        ret.push({
-          name: this.form.name_list[i],
-          type: 'line',
-          yAxisIndex: type_list.indexOf(this.form.type_list[i]),
-          animation: false,
-          lineStyle: {
-            width: 1
-          },
-          data: this.form.closeData[i]
-        })
+        if (type_list.indexOf(this.form.type_list[i]) < 2) {
+          ret.push({
+            name: this.form.name_list[i],
+            type: 'line',
+            yAxisIndex: type_list.indexOf(this.form.type_list[i]),
+            animation: false,
+            lineStyle: {
+              width: 1
+            },
+            data: this.form.closeData[i]
+          })
+        }
       }
       return ret
     }

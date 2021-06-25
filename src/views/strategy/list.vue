@@ -72,26 +72,10 @@
         <el-button type="primary" @click="deleteRow">OK</el-button>
       </span>
     </el-dialog>
-
-    <!-- MultiLine弹出框 -->
-    <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
-      <el-form label-width="100px">
-        <el-form-item label="companies: ">
-          <el-tag v-for="tag in multipleSelection" :key="tag.id" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.id }} - {{ tag.title }}</el-tag>
-        </el-form-item>
-      </el-form>
-
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="multiLineVisible = false">{{ $t('table.cancel') }}</el-button>
-        <el-button type="primary" @click="showCharts">Show Charts</el-button>
-      </div>
-    </el-dialog>
-
   </div>
 </template>
 
 <script>
-import { Message } from 'element-ui'
 import { fetchList, deleteItem } from '@/api/strategy'
 import Pagination from '@/components/Pagination'
 
@@ -126,7 +110,6 @@ export default {
       index: null,
       row: null,
       delVisible: false,
-      multiLineVisible: false,
       multipleSelection: []
     }
   },
@@ -201,51 +184,6 @@ export default {
         console.log('message======================', message)
         this.$message.error('delete error')
       })
-    },
-    // 定义排序规则
-    compare(pro) {
-      return function(obj1, obj2) {
-        var val1 = obj1[pro]
-        var val2 = obj2[pro]
-        if (val1 < val2) { // 升序
-          return -1
-        } else if (val1 > val2) {
-          return 1
-        } else {
-          return 0
-        }
-      }
-    },
-    clickMainBtn() {
-      this.multipleSelection.sort(this.compare('id'))
-      this.multiLineVisible = !this.multiLineVisible
-    },
-    closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].id === tag.id) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
-      this.multipleSelection.sort(this.compare('id'))
-    },
-    showCharts() {
-      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
-        Message({
-          // message: error.message,
-          message: 'The companies should be more than 0 and less than 10',
-          type: 'error',
-          duration: 5 * 1000
-        })
-        return
-      }
-      this.$router.push({
-        name: 'StrategyCompareChart',
-        params: {
-          codes: this.multipleSelection
-        }
-      })
-      this.multiLineVisible = false
     }
   }
 }

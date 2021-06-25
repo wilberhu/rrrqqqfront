@@ -328,7 +328,11 @@ export default {
       this.isTimestampEdit = false
     },
     importPreviousPosition() {
-      this.activityForm.companies = Object.assign([], this.compositionForm.activities[0].companies)
+      for (let activity of this.compositionForm.activities) {
+        if (this.activityForm.timestamp >= activity.timestamp) {
+          this.activityForm.companies = Object.assign([], activity.companies)
+        }
+      }
     },
     editTimestamp(index) {
       this.activityForm = Object.assign({}, this.compositionForm.activities[index])

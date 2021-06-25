@@ -129,8 +129,8 @@
             </el-select>
           </el-form-item>
           <el-form-item label="参数">
-            <template v-for="(value, key) in paramDict" style="white-space: nowrap;">
-              <el-input :key="key" placeholder="value" v-model="paramDict[key]" style="margin-right: 10px; width: 140px;">
+            <template v-for="(value, key) in paramDict" style="white-space: nowrap">
+              <el-input :key="key" placeholder="value" v-model="paramDict[key]" style="margin: 0 10px 10px 0; width: 200px;">
                 <template slot="prepend">{{ key }}</template>
               </el-input>
             </template>

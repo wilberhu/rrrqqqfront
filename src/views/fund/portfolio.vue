@@ -168,11 +168,7 @@ export default {
       )
     },
     handleSizeChange(date) {
-      this.tmpList = this.data[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit)
-    },
-    handleSearch() {
-      this.page = 1
-      this.getList()
+      this.tmpList = this.data[date] ? this.data[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit) : []
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows

@@ -4,7 +4,7 @@ import axios from 'axios'
 
 export function fetchList(query) {
   return request({
-    url: '/api/strategies/',
+    url: '/api/stock_filters/',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function fetchList(query) {
 
 export function fetchAllList(query) {
   return request({
-    url: '/api/strategies/all/',
+    url: '/api/stock_filters/all/',
     method: 'get',
     params: query
   })
@@ -20,28 +20,29 @@ export function fetchAllList(query) {
 
 export function fetchItem(id) {
   return request({
-    url: '/api/strategies/' + id + '/',
+    url: '/api/stock_filters/' + id + '/',
     method: 'get'
   })
 }
 
 export function fetchItemCode(id) {
   return request({
-    url: '/api/strategies/' + id + '/code/',
+    url: '/api/stock_filters/' + id + '/code/',
     method: 'get'
   })
 }
 
-export function fetchItemParam(id) {
+export function fetchItemData(id, params) {
   return request({
-    url: '/api/strategies/' + id + '/param/',
-    method: 'get'
+    url: '/api/stock_filters/' + id + '/data/',
+    method: 'get',
+    params
   })
 }
 
 export function createItem(data) {
   return request({
-    url: '/api/strategies/',
+    url: '/api/stock_filters/',
     method: 'post',
     data
   })
@@ -49,7 +50,7 @@ export function createItem(data) {
 
 export function updateItem(id, data) {
   return request({
-    url: '/api/strategies/' + id + '/',
+    url: '/api/stock_filters/' + id + '/',
     method: 'put',
     data
   })
@@ -57,26 +58,7 @@ export function updateItem(id, data) {
 
 export function deleteItem(id) {
   return request({
-    url: '/api/strategies/' + id + '/',
+    url: '/api/stock_filters/' + id + '/',
     method: 'delete'
-  })
-}
-
-export function fetchStrategyPortfolioDownload(path) {
-  return axios({
-    url: '/api/strategies/portfolio/' + path,
-    method: 'get',
-    headers: {
-      Authorization: 'Bearer ' + getToken()
-    }
-  })
-}
-
-export function fetchCombineData(data, column='close', params) {
-  return request({
-    url: '/api/combine/' + column + '/',
-    method: 'post',
-    params,
-    data
   })
 }

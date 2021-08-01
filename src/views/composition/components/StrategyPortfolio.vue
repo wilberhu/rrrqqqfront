@@ -9,7 +9,7 @@
       <el-tab-pane :label="date" :name="date" v-for="(portfolio, date) in portfolio.group_data" :key="date">
         <el-table
           :ref="'portfolioTable'+date"
-          :key="paging[date].tableKey"
+          :key="paging[date]?paging[date].tableKey:0"
           :data="tmpList"
           max-height="500"
           style="width: 100%"
@@ -23,7 +23,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <pagination v-if="paging[date].total>0" :total="paging[date].total" :page.sync="paging[date].page" :limit.sync="limit" @pagination="handleSizeChange(date)"/>
+        <pagination v-if="paging[date].total>0" :total="paging[date] ? paging[date].total : 0" :page.sync="paging[date].page" :limit.sync="limit" @pagination="handleSizeChange(date)"/>
       </el-tab-pane>
     </el-tabs>
 

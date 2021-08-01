@@ -62,7 +62,7 @@
     <el-dialog :visible.sync="delVisible" title="Warning" width="300px" center>
       <div class="del-dialog-cnt">Are you confirm to remove the data?</div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="delVisible = false">Cancle</el-button>
+        <el-button @click="delVisible = false">Cancel</el-button>
         <el-button type="primary" @click="deleteRow">OK</el-button>
       </span>
     </el-dialog>

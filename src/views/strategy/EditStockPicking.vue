@@ -6,7 +6,7 @@
 import StockPickingDetail from './components/StockPickingDetail'
 
 export default {
-  name: 'EditForm',
+  name: 'EditStockPicking',
   components: { StockPickingDetail }
 }
 </script>

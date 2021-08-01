@@ -1,5 +1,5 @@
 <template>
-  <div :class="className" :style="{height:height,width:width}" />
+  <div :class="className" :id="'stack_line_chart'" :style="{height:height,width:width}" />
 </template>
 
 <script>
@@ -21,7 +21,7 @@ export default {
     },
     height: {
       type: String,
-      default: '600px'
+      default: '700px'
     },
     autoResize: {
       type: Boolean,
@@ -47,7 +47,7 @@ export default {
           this.chart = null
         }
         this.initChart()
-        this.setOptions(val)
+        this.setOptions(chartDataGlobal)
       }
     }
   },
@@ -64,6 +64,14 @@ export default {
     this.chart = null
   },
   methods: {
+    draw: function() {
+      if (this.chart) {
+        this.chart.dispose()
+        this.chart = null
+      }
+      this.initChart()
+      this.setOptions(chartDataGlobal)
+    },
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
     },
@@ -71,23 +79,23 @@ export default {
       let ret = []
       ret.push(
         echarts.util.merge({
-          name: chartData.codeList? chartData.codeList[0] : '',
+          name: chartData.ts_code_list? chartData.ts_code_list[0] : '',
           type: 'line',
           xAxisIndex: 1,
           yAxisIndex: 1,
           smooth: false,
           hoverAnimation: false,
-          data: chartData.codeList? chartData.data[0] : ''
+          data: chartData.ts_code_list? chartData.close_data[0] : ''
         })
       )
-      for(let i = 1; i < chartData.codeList.length; i++){
+      for(let i = 1; i < chartData.ts_code_list.length; i++){
         ret.push(
           echarts.util.merge({
             type: 'line',
-            name: chartData.codeList[i],
+            name: chartData.ts_code_list[i],
             areaStyle: {},
             stack: '总量',
-            data: chartData.data[i],
+            data: chartData.close_data[i],
             smooth: false,
             hoverAnimation: false,
             animationDuration: 2000
@@ -109,7 +117,7 @@ export default {
           }
         },
         legend: {
-          data: chartData.codeList,
+          data: chartData.ts_code_list,
           left: 10,
           top: 25
         },
@@ -162,7 +170,7 @@ export default {
               alignWithLabel: true
             },
             axisLine: {onZero: true},
-            data: chartData.timestamp
+            data: chartData.time_line
           },
           {
             gridIndex: 1,
@@ -172,7 +180,7 @@ export default {
               alignWithLabel: true
             },
             axisLine: {onZero: true},
-            data: chartData.timestamp,
+            data: chartData.time_line,
           }
         ],
         yAxis: [
@@ -192,15 +200,15 @@ export default {
         formatter: function(params) {
           const params_index = []
           if (params instanceof Array) {
-            for (let i = 0; i < chartDataGlobal.codeList.length; i++) {
+            for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
               for (let j = 0; j < params.length; j++) {
-                if (chartDataGlobal.codeList[i] === params[j].seriesName) {
+                if (chartDataGlobal.ts_code_list[i] === params[j].seriesName) {
                   params_index.push(j)
                 }
               }
             }
-            let ret = chartDataGlobal.timestamp[params[0].dataIndex] + '<br>'
-            for (let i = 0; i < chartDataGlobal.codeList.length; i++) {
+            let ret = chartDataGlobal.time_line[params[0].dataIndex] + '<br>'
+            for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
               if(params[params_index[i]] && params[params_index[i]].data) {
                 ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName + ': ' + params[params_index[i]].data + '<br>'
               }

@@ -49,31 +49,35 @@
           >Save Composition</el-button>
         </el-col>
         <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
-          <el-row v-show="lineChartData.timestamp.length>0">
+          <el-row v-show="lineChartData.time_line.length>0">
             <el-form-item label="Benchmark" label-width="120px" style="margin-left: 20px;">
               <el-autocomplete
                 v-model="benchmarkForm.ts_code"
                 :fetch-suggestions="querySearchAsyncBenchmark"
                 placeholder="请输入内容"
                 style="width: 220px;"
+                clearable
                 @select="handleSelectBenchmark($event)"
+                @input="handleInputBenchmark($event)"
               >
                 <template slot="suffix">{{ benchmarkForm.name }}</template>
               </el-autocomplete>
             </el-form-item>
           </el-row>
-          <el-row v-show="lineChartData.timestamp.length>0">
+          <el-row v-show="lineChartData.time_line.length>0">
             <el-form-item label="Company" label-width="120px" style="margin-left: 20px;">
               <el-cascader
                 placeholder="Search"
                 :options="companyOptions"
                 :props="{ checkStrictly: false }"
+                clearable
                 @change="handleSelectCompany($event)"
+                @clear="handleClearCompany($event)"
                 filterable></el-cascader>
             </el-form-item>
           </el-row>
           <el-row>
-            <line-chart :chart-data="lineChartData" :benchmark="benchmarkData"/>
+            <line-chart ref="lineChart"/>
           </el-row>
         </el-col>
       </el-row>
@@ -220,7 +224,6 @@ export default {
   },
   data() {
     return {
-      tableKey: 0,
       companies: [],
       companyDict: {},
       compositionForm: {
@@ -247,7 +250,11 @@ export default {
         histData: null,
         maData: null
       },
-      benchmarkData: [],
+      benchmarkData: {
+        ts_code: null,
+        name: null,
+        histData: null
+      },
       benchmarkDatalist: {
         company: [],
         index: [],
@@ -255,9 +262,9 @@ export default {
       },
       reverse: true,
       lineChartData: {
-        timestamp: [],
-        codeList: [],
-        data: []
+        time_line: [],
+        ts_code_list: [],
+        close_data: []
       },
       downloadLoading: false,
       editVisible: false,
@@ -328,7 +335,7 @@ export default {
       this.isTimestampEdit = false
     },
     importPreviousPosition() {
-      for (let activity of this.compositionForm.activities) {
+      for (var activity of this.compositionForm.activities) {
         if (this.activityForm.timestamp >= activity.timestamp) {
           this.activityForm.companies = Object.assign([], activity.companies)
         }
@@ -527,6 +534,7 @@ export default {
         })
         calculateComposition(this.compositionForm).then(response => {
           this.lineChartData = Object.assign({}, response)
+          this.$refs.lineChart.updateData(this.lineChartData, this.benchmarkData)
           msg.close()
           resolve(response)
           setTimeout(() => {
@@ -634,6 +642,22 @@ export default {
       this.benchmarkForm.type = 'index'
       this.drawCharts()
     },
+    handleClearBenchmark(event) {
+      this.benchmarkForm.ts_code = undefined
+      this.benchmarkForm.name = undefined
+      this.benchmarkForm.type = 'index'
+      this.benchmarkData = {
+        ts_code: undefined,
+        name: undefined,
+        histData: undefined
+      }
+      this.$refs.lineChart.updateData(this.lineChartData, this.benchmarkData, true)
+    },
+    handleInputBenchmark(event) {
+      if (event === '') {
+        this.handleClearBenchmark()
+      }
+    },
     drawCharts() {
       if (this.benchmarkForm.ts_code) {
         if (this.benchmarkForm.type === 'index') {
@@ -649,15 +673,21 @@ export default {
               indexCloseData.push(item[2])
             }
 
-            this.benchmarkData = []
-            for (const item of this.lineChartData.timestamp) {
+            var histData = []
+            for (const item of this.lineChartData.time_line) {
               const tmpIndex = indexDate.indexOf(item)
               if (tmpIndex !== -1) {
-                this.benchmarkData.push(indexCloseData[tmpIndex])
+                histData.push(indexCloseData[tmpIndex])
               } else {
-                this.benchmarkData.push('')
+                histData.push('')
               }
             }
+            this.benchmarkData = {
+              ts_code: this.benchmarkForm.ts_code,
+              name: this.benchmarkForm.name,
+              histData: histData
+            }
+            this.$refs.lineChart.updateData(this.lineChartData, this.benchmarkData)
           })
         } else if (this.benchmarkForm.type === 'company') {
           getCompanyHistData(this.benchmarkForm.ts_code).then(response => {
@@ -665,22 +695,28 @@ export default {
             this.benchmarkForm.histData = response.hist_data
             this.benchmarkForm.maData = response.ma_data
 
-            const indexDate = []
-            const indexCloseData = []
+            const companyDate = []
+            const companyCloseData = []
             for (const item of this.benchmarkForm.histData) {
-              indexDate.push(item[0])
-              indexCloseData.push(item[2])
+              companyDate.push(item[0])
+              companyCloseData.push(item[2])
             }
 
-            this.benchmarkData = []
-            for (const item of this.lineChartData.timestamp) {
-              const tmpIndex = indexDate.indexOf(item)
+            var histData = []
+            for (const item of this.lineChartData.time_line) {
+              const tmpIndex = companyDate.indexOf(item)
               if (tmpIndex !== -1) {
-                this.benchmarkData.push(indexCloseData[tmpIndex])
+                histData.push(companyCloseData[tmpIndex])
               } else {
-                this.benchmarkData.push('')
+                histData.push('')
               }
             }
+            this.benchmarkData = {
+              ts_code: this.benchmarkForm.ts_code,
+              name: this.benchmarkForm.name,
+              histData: histData
+            }
+            this.$refs.lineChart.updateData(this.lineChartData, this.benchmarkData)
           })
         }
       }
@@ -707,6 +743,17 @@ export default {
       this.benchmarkForm.name = this.companyDict[event[1]]
       this.benchmarkForm.type = 'company'
       this.drawCharts()
+    },
+    handleClearCompany(event) {
+      this.benchmarkForm.ts_code = undefined
+      this.benchmarkForm.name = undefined
+      this.benchmarkForm.type = 'company'
+      this.benchmarkData = {
+        ts_code: undefined,
+        name: undefined,
+        histData: undefined
+      }
+      this.$refs.lineChart.updateData(this.lineChartData, this.benchmarkData, true)
     }
   }
 }

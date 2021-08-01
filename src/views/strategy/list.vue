@@ -1,17 +1,5 @@
 <template>
   <div class="tab-container">
-<!--    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
-    <vue-fab
-      :main-btn-color="'#2196F3'"
-      :fab-animate-bezier="'ease-out'"
-      :fab-auto-hide-animate-model="'alive'"
-      :scroll-auto-hide="false"
-      prop="open"
-      style="right: 13%; bottom: 15%"
-      icon="multiline_chart"
-      size="big"
-      fab-item-animate="alive"
-      @clickMainBtn="clickMainBtn"/>
     <el-table
       v-loading="listLoading"
       ref="multipleTable"
@@ -80,7 +68,7 @@ import { fetchList, deleteItem } from '@/api/strategy'
 import Pagination from '@/components/Pagination'
 
 export default {
-  name: 'StratageList',
+  name: 'StrategyList',
   components: { Pagination },
   filters: {
     statusFilter(status) {
@@ -192,29 +180,5 @@ export default {
 <style>
   .tab-container {
     margin: 20px;
-  }
-  /* fallback */
-  @font-face {
-    font-family: 'Material Icons';
-    font-style: normal;
-    font-weight: 400;
-    src: url("../../icons/gstatic/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2") format('woff2');
-    /*src: url(https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');*/
-  }
-
-  .material-icons {
-    font-family: 'Material Icons';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-feature-settings: 'liga';
-    -webkit-font-smoothing: antialiased;
   }
 </style>

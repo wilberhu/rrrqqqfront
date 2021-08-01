@@ -2,6 +2,18 @@
   <div class="tab-container">
 
     <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
+<!--    <vue-fab-->
+<!--      :main-btn-color="'#2196F3'"-->
+<!--      :fab-animate-bezier="'ease-out'"-->
+<!--      :fab-auto-hide-animate-model="'alive'"-->
+<!--      :scroll-auto-hide="false"-->
+<!--      prop="open"-->
+<!--      style="right: 13%; bottom: 15%"-->
+<!--      icon="multiline_chart"-->
+<!--      size="big"-->
+<!--      fab-item-animate="alive"-->
+<!--      @clickMainBtn="clickMainBtn"/>-->
+
     <vue-fab
       :main-btn-color="'#2196F3'"
       :fab-animate-bezier="'ease-out'"
@@ -9,10 +21,12 @@
       :scroll-auto-hide="false"
       prop="open"
       style="right: 13%; bottom: 15%"
-      icon="multiline_chart"
+      icon="add"
       size="big"
-      fab-item-animate="alive"
-      @clickMainBtn="clickMainBtn"/>
+      fab-item-animate="alive">
+      <fab-item @clickItem="combineChart" :idx="0" title="combine" icon="stacked_bar_chart" />
+      <fab-item @clickItem="compareChart" :idx="1" title="compare" icon="waterfall_chart" />
+    </vue-fab>
 
     <el-tabs v-model="activeName" @tab-click="handleTabClick">
       <el-tab-pane label="fund" name="fund">
@@ -20,57 +34,109 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- MultiLine弹出框 -->
-    <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
+    <!-- combine对话框 -->
+    <el-dialog ref="combineDialog" title="Combine" width="80%" top="5vh" :fullscreen="combineFullscreen" :visible.sync="combineDialogVisible">
+      <div slot="title" class="header-title">
+        <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCombineFullscreen(!combineFullscreen)"></i>
+      </div>
       <el-form label-width="100px">
-        <el-form-item label="companies: ">
-          <el-tag v-for="tag in inCompany" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
-        </el-form-item>
-        <el-form-item label="indexes: ">
-          <el-tag v-for="tag in inIndex" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
-        </el-form-item>
         <el-form-item label="funds: ">
-          <el-tag v-for="tag in inFund" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        </el-form-item>
+        <el-form-item>
+          <el-date-picker
+            :picker-options="datePickerOptions"
+            v-model="compositionForm.timestamp"
+            format="yyyyMMdd"
+            value-format="yyyyMMdd"
+            type="date"
+            aria-required="true"
+            placeholder="选择日期"
+            @blur="refreshChart()"
+          >
+          </el-date-picker>
+          <el-input type="number" readonly placeholder="value" v-model="compositionForm.allfund" style="margin: 0 10px 10px 0; width: 240px;">
+            <template slot="prepend">资金总额</template>
+          </el-input>
+          <el-input type="number" readonly placeholder="value" v-model="compositionForm.commission" style="margin: 0 10px 10px 0; width: 240px;">
+            <template slot="prepend">手续费</template>
+          </el-input>
         </el-form-item>
       </el-form>
+      <stack-line-chart ref="CombineChart" :chart-data="combineForm" :height="combineChartHeight" />
+    </el-dialog>
 
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="multiLineVisible = false">{{ $t('table.cancel') }}</el-button>
-        <el-button type="primary" @click="showCharts">Show Charts</el-button>
+    <!-- compare对话框 -->
+    <el-dialog ref="compareDialog" title="Compare" width="80%" top="5vh" :fullscreen="compareFullscreen" :visible.sync="compareDialogVisible">
+      <div slot="title" class="header-title">
+        <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCompareFullscreen(!compareFullscreen)"></i>
       </div>
+      <el-form label-width="100px">
+        <el-form-item label="funds: ">
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        </el-form-item>
+      </el-form>
+      <CompareChart ref="CompareChart" :form="compareForm" :height="compareChartHeight"></CompareChart>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { Message } from 'element-ui'
 import StockFund from './stock_fund'
+import CompareChart from './compare_chart'
+import StackLineChart from '@/views/composition/components/StackLineChart'
+import { fetchCompanyClose } from '@/api/histData'
+import { fetchCombineData } from '@/api/strategy'
 
 export default {
   name: 'Basic',
   components: {
-    StockFund
+    StockFund,
+    CompareChart,
+    StackLineChart
   },
   data() {
     return {
       activeName: 'fund',
       multiLineVisible: false,
-      multipleSelection: [],
+      multipleSelection: {
+        company: [],
+        index: [],
+        fund: []
+      },
       company_selection: [],
       index_selection: [],
       fund_selection: [],
-      delete_selection: undefined
-    }
-  },
-  computed: {
-    inCompany: function() {
-      return this.multipleSelection.filter(i => i.type === 'company')
-    },
-    inIndex: function() {
-      return this.multipleSelection.filter(i => i.type === 'index')
-    },
-    inFund: function() {
-      return this.multipleSelection.filter(i => i.type === 'fund')
+      delete_selection: undefined,
+      combineFullscreen: false,
+      combineDialogVisible: false,
+      compareFullscreen: false,
+      compareDialogVisible: false,
+      combineForm: {
+        time_line: [],
+        ts_code_list: [],
+        close_data: []
+      },
+      compareForm: {
+        ts_code_list: [],
+        name_list: [],
+        type_list: [],
+        time_line: [],
+        close_data: []
+      },
+      compareChartHeight: 'calc(90vh - 160px)',
+      combineChartHeight: 'calc(90vh - 240px)',
+      typeList: ['fund'],
+      compositionForm: {
+        timestamp: '20200701',
+        allfund: 100000000,
+        commission: 0.0001
+      },
+      datePickerOptions: {
+        disabledDate(date) {
+          return date > new Date()
+        }
+      }
     }
   },
   created() {
@@ -83,21 +149,6 @@ export default {
     handleTabClick(tab, event) {
       // console.log(tab, event)
     },
-
-    // 定义排序规则
-    compare(pro) {
-      return function(obj1, obj2) {
-        var val1 = obj1[pro]
-        var val2 = obj2[pro]
-        if (val1 < val2) { // 升序
-          return -1
-        } else if (val1 > val2) {
-          return 1
-        } else {
-          return 0
-        }
-      }
-    },
     listenCompanySelection(data) {
       this.company_selection = data
     },
@@ -108,58 +159,130 @@ export default {
       this.fund_selection = data
     },
     clickMainBtn() {
-      this.multipleSelection = []
+      this.multipleSelection['company'] = []
       for (let i = 0; i < this.company_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['company'].push({
           ts_code: this.company_selection[i].ts_code,
           name: this.company_selection[i].name,
           type: 'company'
         })
       }
+      this.multipleSelection['index'] = []
       for (let i = 0; i < this.index_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['index'].push({
           ts_code: this.index_selection[i].ts_code,
           name: this.index_selection[i].name,
           type: 'index'
         })
       }
+      this.multipleSelection['fund'] = []
       for (let i = 0; i < this.fund_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['fund'].push({
           ts_code: this.fund_selection[i].ts_code,
           name: this.fund_selection[i].name,
           type: 'fund'
         })
       }
-      this.multipleSelection.sort(this.compare('ts_code'))
-      this.multiLineVisible = !this.multiLineVisible
+      // this.multiLineVisible = !this.multiLineVisible
     },
-    closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === tag.ts_code) {
-          this.multipleSelection.splice(i, 1)
+    async closeTag(tag) {
+      for (let i = 0; i < this.multipleSelection[tag.type].length; i++) {
+        if (this.multipleSelection[tag.type][i].ts_code === tag.ts_code) {
+          this.multipleSelection[tag.type].splice(i, 1)
           break
         }
       }
       this.delete_selection = tag.ts_code
-      this.multipleSelection.sort(this.compare('ts_code'))
+      await this.refreshChart()
     },
-    showCharts() {
-      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
-        Message({
-          // message: error.message,
-          message: 'The selected items should be more than 0 and less than 10',
-          type: 'error',
-          duration: 5 * 1000
-        })
-        return
+    async refreshChart() {
+      if (this.compareDialogVisible) {
+        this.compareForm = Object.assign({}, await this.getCompanyCloseData())
+        this.switchCompareFullscreen(this.compareFullscreen)
+      } else if (this.combineDialogVisible) {
+        this.combineForm = Object.assign({}, await this.getCombineData())
+        this.switchCombineFullscreen(this.combineFullscreen)
       }
-      this.$router.push({
-        name: 'CloseChart',
-        params: {
-          codes: this.multipleSelection
+    },
+    async combineChart(item) {
+      this.compareDialogVisible = false
+      this.combineDialogVisible = true
+      this.compositionForm.timestamp = '20200701'
+      this.clickMainBtn()
+      this.combineForm = Object.assign({}, await this.getCombineData())
+      this.switchCombineFullscreen(this.combineFullscreen)
+    },
+    async compareChart(item) {
+      this.combineDialogVisible = false
+      this.compareDialogVisible = true
+      this.clickMainBtn()
+      this.compareForm = Object.assign({}, await this.getCompanyCloseData())
+      this.switchCompareFullscreen(this.compareFullscreen)
+    },
+    switchCombineFullscreen(fullscreen) {
+      this.combineFullscreen = fullscreen
+      if (this.combineFullscreen) {
+        this.combineChartHeight = 'calc(100vh - 240px)'
+      } else {
+        this.combineChartHeight = 'calc(90vh - 240px)'
+      }
+      var _this = this
+      setTimeout(function() {
+        _this.$refs.CombineChart.draw()
+      }, 0)
+    },
+    switchCompareFullscreen(fullscreen) {
+      this.compareFullscreen = fullscreen
+      if (this.compareFullscreen) {
+        this.campareChartHeight = 'calc(100vh - 160px)'
+      } else {
+        this.campareChartHeight = 'calc(90vh - 160px)'
+      }
+      var _this = this
+      setTimeout(function() {
+        _this.$refs.CompareChart.$refs.Chart.draw()
+      }, 0)
+    },
+    getCompanyCloseData() {
+      return new Promise(resolve => {
+        const data = {
+          ts_code_list: [],
+          type_list: []
         }
+        for (const key of this.typeList) {
+          for (let i = 0; i < this.multipleSelection[key].length; i++) {
+            data.ts_code_list.push(this.multipleSelection[key][i].ts_code)
+            data.type_list.push(key)
+          }
+        }
+        fetchCompanyClose(data, 'unit_nav').then(response => {
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
       })
-      this.multiLineVisible = false
+    },
+    getCombineData() {
+      return new Promise(resolve => {
+        const data = {
+          ts_code_list: [],
+          type_list: [],
+          timestamp: this.compositionForm.timestamp,
+          allfund: this.compositionForm.allfund,
+          commission: this.compositionForm.commission
+        }
+        for (const key of this.typeList) {
+          for (let i = 0; i < this.multipleSelection[key].length; i++) {
+            data.ts_code_list.push(this.multipleSelection[key][i].ts_code)
+            data.type_list.push(key)
+          }
+        }
+        fetchCombineData(data, 'unit_nav').then(response => {
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
+      })
     }
   }
 }

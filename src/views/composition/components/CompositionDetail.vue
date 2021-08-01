@@ -250,9 +250,9 @@ export default {
       },
       reverse: true,
       lineChartData: {
-        timestamp: [],
-        codeList: [],
-        data: []
+        time_line: [],
+        ts_code_list: [],
+        close_data: []
       },
       list: [],
       listLoading: false,
@@ -295,19 +295,19 @@ export default {
   },
   methods: {
     fetchData(id) {
-    return new Promise(resolve => {
-      fetchItem(id).then(response => {
-        // set tagsview title
-        this.setTagsViewTitle()
-        // set page title
-        this.setPageTitle()
+      return new Promise(resolve => {
+        fetchItem(id).then(response => {
+          // set tagsview title
+          this.setTagsViewTitle()
+          // set page title
+          this.setPageTitle()
 
-        resolve(response)
-        setTimeout(() => {
-        }, 1.5 * 1000)
+          resolve(response)
+          setTimeout(() => {
+          }, 1.5 * 1000)
+        })
       })
-    })
-  },
+    },
     submit() {
       this.updateState()
     },
@@ -528,16 +528,16 @@ export default {
           }
         })
       })
-      .catch(
-        error => {
-          msg.close()
-          msg = this.$message({
-            showClose: true,
-            message: error,
-            type: 'Error'
-          })
-        }
-      )
+        .catch(
+          error => {
+            msg.close()
+            msg = this.$message({
+              showClose: true,
+              message: error,
+              type: 'Error'
+            })
+          }
+        )
     },
     setTagsViewTitle() {
       const title = 'Edit Composition'

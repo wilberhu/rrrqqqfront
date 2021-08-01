@@ -113,8 +113,8 @@ export default {
         ts_code_list: [],
         name_list: [],
         type_list: [],
-        timeLine: [],
-        closeData: []
+        time_line: [],
+        close_data: []
       },
       dynamicTags: {
         company: [],
@@ -141,19 +141,20 @@ export default {
   activated() {
     if (this.$route.params.codes) {
       this.show = true
-      this.dynamicTags = {
-        company: [],
-        index: [],
-        fund: []
+      if (this.$route.params.codes.company) {
+        this.dynamicTags.company = Object.assign([], this.$route.params.codes.company)
+      }
+      if (this.$route.params.codes.index) {
+        this.dynamicTags.index = Object.assign([], this.$route.params.codes.index)
+      }
+      if (this.$route.params.codes.fund) {
+        this.dynamicTags.fund = Object.assign([], this.$route.params.codes.fund)
       }
       var typeSet = new Set()
-      for (var i = 0; i < this.$route.params.codes.length; i++) {
-        typeSet.add(this.$route.params.codes[i].type)
-        this.dynamicTags[this.$route.params.codes[i].type].push({
-          'ts_code': this.$route.params.codes[i].ts_code,
-          'name': this.$route.params.codes[i].name,
-          'type': this.$route.params.codes[i].type
-        })
+      for (var type in this.dynamicTags) {
+        if (this.dynamicTags[type].length > 0) {
+          typeSet.add(type)
+        }
       }
       this.typeList = Array.from(typeSet)
       this.drawCharts()
@@ -177,8 +178,8 @@ export default {
         this.form.ts_code_list = response.ts_code_list
         this.form.name_list = response.name_list
         this.form.type_list = response.type_list
-        this.form.timeLine = response.time_line
-        this.form.closeData = response.close_data
+        this.form.time_line = response.time_line
+        this.form.close_data = response.close_data
         this.$refs.Chart.draw()
       })
     },

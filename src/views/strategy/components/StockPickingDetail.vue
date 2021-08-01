@@ -333,6 +333,11 @@ export default {
   mounted() {
   },
   created() {
+    // init the default selected tab
+    if (this.$route.query.tab && ['factor', 'strategy'].indexOf(this.$route.query.tab) !== -1) {
+      this.stockPickingForm.method = this.$route.query.tab
+    }
+
     if (this.isEdit) {
       this.stockPickingForm.id = this.$route.params && this.$route.params.id
       this.fetchData(this.stockPickingForm.id)
@@ -464,8 +469,6 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           if (this.stockPickingForm.method === 'factor') {
-            this.calculateDisabled = true
-
             this.factorForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
             this.factorForm.commission = this.$refs.compositionDetail.compositionForm.commission
 
@@ -473,8 +476,6 @@ export default {
             this.stockPickingForm.start_time = this.factorForm.startTime
             this.stockPickingForm.end_time = this.factorForm.endTime
           } else if (this.stockPickingForm.method === 'strategy') {
-            this.calculateDisabled = true
-
             this.strategyForm.allfund = this.$refs.compositionDetail.compositionForm.allfund
             this.strategyForm.commission = this.$refs.compositionDetail.compositionForm.commission
 
@@ -482,7 +483,9 @@ export default {
             this.stockPickingForm.start_time = this.strategyForm.startTime
             this.stockPickingForm.end_time = this.strategyForm.endTime
           }
+
           if (this.isEdit) {
+            this.calculateDisabled = true
             this.saveStockPickingVisible = false
 
             const msg = this.$message({
@@ -509,6 +512,7 @@ export default {
                 this.calculateDisabled = false
               })
           } else {
+            this.calculateDisabled = true
             this.saveStockPickingVisible = false
 
             const msg = this.$message({
@@ -521,6 +525,7 @@ export default {
               .then(async response => {
                 this.portfolio = Object.assign({}, response.result)
                 this.stockPickingForm = Object.assign({}, response)
+                this.calculateDisabled = false
                 this.$router.push({
                   path: '/strategy/edit_stock_picking/' + this.stockPickingForm.id
                 })

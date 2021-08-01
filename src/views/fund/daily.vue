@@ -1,5 +1,16 @@
 <template>
   <div class="tab-container">
+    <vue-fab
+      :main-btn-color="'#2196F3'"
+      :fab-animate-bezier="'ease-out'"
+      :fab-auto-hide-animate-model="'alive'"
+      :scroll-auto-hide="false"
+      prop="open"
+      style="right: 13%; bottom: 15%"
+      icon="multiline_chart"
+      size="big"
+      fab-item-animate="alive"
+      @clickMainBtn="clickMainBtn"/>
     <el-form ref="form" :inline="true" :model="form">
       <el-form-item>
         <el-autocomplete
@@ -27,7 +38,7 @@
       highlight-current-row
       @sort-change="sortChange"
       @selection-change="handleSelectionChange">
-      <el-table-column fixed :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
+      <el-table-column fixed :reserve-selection="true" v-model="fund_selection" type="selection" align="center" width="55"/>
       <el-table-column fixed prop="ts_code" sortable="custom" align="center" :label="$t('table.nav_fund.ts_code')" :class-name="getSortClass('ts_code')" width="110">
         <template slot-scope="scope">
           <!--{{ scope.$index }}-->
@@ -115,7 +126,19 @@
       </el-table-column>
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="page" :limit.sync="listQuery.limit" @pagination="getList" />
+    <!-- MultiLine弹出框 -->
+    <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
+      <el-form label-width="100px">
+        <el-form-item label="funds: ">
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        </el-form-item>
+      </el-form>
 
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="multiLineVisible = false">{{ $t('table.cancel') }}</el-button>
+        <el-button type="primary" @click="showCharts">Show Charts</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -124,9 +147,10 @@ import { fetchAllList as fetchAllFunds } from '@/api/fundBasic'
 import { fetchList } from '@/api/fundDaily'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+import { Message } from 'element-ui' // Secondary package based on el-pagination
 
 export default {
-  name: 'DailyFund',
+  name: 'FundDaily',
   components: {
     Pagination
   },
@@ -161,7 +185,13 @@ export default {
         { label: 'Name Ascending', key: 'name' },
         { label: 'Name Descending', key: '-name' }],
 
-      multipleSelection: [],
+      multipleSelection: {
+        company: [],
+        index: [],
+        fund: []
+      },
+      fund_selection: [],
+      multiLineVisible: false,
       form: {
         ts_code: undefined,
         name: undefined,
@@ -182,6 +212,53 @@ export default {
     this.getAllFunds()
   },
   methods: {
+    clickMainBtn() {
+      this.multipleSelection['fund'] = []
+      for (let i = 0; i < this.fund_selection.length; i++) {
+        this.multipleSelection['fund'].push({
+          ts_code: this.fund_selection[i].ts_code,
+          name: this.fund_selection[i].name,
+          type: 'fund'
+        })
+      }
+      this.multiLineVisible = !this.multiLineVisible
+    },
+    closeTag(tag) {
+      for (let i = 0; i < this.multipleSelection[tag.type].length; i++) {
+        if (this.multipleSelection[tag.type][i].ts_code === tag.ts_code) {
+          this.multipleSelection[tag.type].splice(i, 1)
+          break
+        }
+      }
+      for (let i = 0; i < this.fund_selection.length; i++) {
+        if (this.fund_selection[i].ts_code === tag.ts_code) {
+          this.$refs.multipleTable.toggleRowSelection(this.fund_selection[i])
+          break
+        }
+      }
+    },
+    showCharts() {
+      const multipleSelectionLength = this.multipleSelection['company'].length +
+        this.multipleSelection['index'].length +
+        this.multipleSelection['fund'].length
+      if (multipleSelectionLength <= 0 || multipleSelectionLength > 10) {
+        Message({
+          // message: error.message,
+          message: 'The selected items should be more than 0 and less than 10',
+          type: 'error',
+          duration: 5 * 1000
+        })
+        return
+      }
+      this.$router.push({
+        name: 'CloseChart',
+        params: {
+          codes: this.multipleSelection
+        }
+      })
+      this.multiLineVisible = false
+    },
+
     drawHistLine(item) {
       const multipleSelection = []
       multipleSelection.push({
@@ -199,14 +276,17 @@ export default {
       })
     },
     drawNavLine(item) {
-      const multipleSelection = []
-      multipleSelection.push({
-        ts_code: item.ts_code,
-        name: item.name,
-        type: 'fund'
-      })
+      const multipleSelection = {
+        'fund': [
+          {
+            ts_code: item.ts_code,
+            name: item.name,
+            type: 'fund'
+          }
+        ]
+      }
       this.$router.push({
-        name: 'NavChart',
+        name: 'CloseChart',
         params: {
           codes: multipleSelection
         }
@@ -246,7 +326,7 @@ export default {
       this.getList()
     },
     handleInput(event) {
-      if(event==='') {
+      if (event === '') {
         this.handleClear()
       }
     },
@@ -283,8 +363,7 @@ export default {
       this.getList()
     },
     handleSelectionChange(rows) {
-      this.multipleSelection = rows
-      this.$emit('company_multiple_selection', this.multipleSelection)
+      this.fund_selection = rows
     },
     getSortClass: function(key) {
       const sort = this.listQuery.ordering
@@ -300,5 +379,29 @@ export default {
 <style>
 .tab-container {
   margin: 20px;
+}
+/* fallback */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../icons/gstatic/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2") format('woff2');
+  /*src: url(https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');*/
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
 </style>

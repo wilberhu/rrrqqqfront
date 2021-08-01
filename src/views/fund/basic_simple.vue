@@ -49,7 +49,7 @@
           <fund-portfolio :ts_code="props.row.ts_code" />
         </template>
       </el-table-column>
-      <el-table-column :reserve-selection="true" v-model="multipleSelection" type="selection" align="center" width="55"/>
+      <el-table-column :reserve-selection="true" v-model="fund_selection" type="selection" align="center" width="55"/>
       <el-table-column prop="ts_code" sortable="custom" align="center" :label="$t('table.basic_fund.ts_code')" :class-name="getSortClass('ts_code')" width="110">
         <template slot-scope="scope">
           <!--{{ scope.$index }}-->
@@ -69,11 +69,6 @@
       <el-table-column sortable prop="custodian" :label="$t('table.basic_fund.custodian')" :class-name="getSortClass('custodian')">
         <template slot-scope="scope">
           {{ scope.row.custodian }}
-        </template>
-      </el-table-column>
-      <el-table-column sortable prop="name" :label="$t('table.basic_fund.name')" :class-name="getSortClass('name')">
-        <template slot-scope="scope">
-          {{ scope.row.name }}
         </template>
       </el-table-column>
       <el-table-column sortable prop="fund_type" :label="$t('table.basic_fund.fund_type')" :class-name="getSortClass('fund_type')">
@@ -98,7 +93,7 @@
     <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
       <el-form label-width="100px">
         <el-form-item label="funds: ">
-          <el-tag v-for="tag in multipleSelection" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
         </el-form-item>
       </el-form>
 
@@ -116,8 +111,9 @@ import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination'
 import { Message } from 'element-ui' // Secondary package based on el-pagination
 import FundPortfolio from './portfolio'
+
 export default {
-  name: 'BasicFundSimple',
+  name: 'FundPortfolio',
   components: {
     Pagination,
     FundPortfolio
@@ -156,7 +152,12 @@ export default {
         ordering: undefined,
         ts_code: undefined
       },
-      multipleSelection: [],
+      multipleSelection: {
+        company: [],
+        index: [],
+        fund: []
+      },
+      fund_selection: [],
       multiLineVisible: false,
       form: {
         ts_code: undefined,
@@ -181,46 +182,36 @@ export default {
     handleTabClick(tab, event) {
       // console.log(tab, event)
     },
-    // 定义排序规则
-    compare(pro) {
-      return function(obj1, obj2) {
-        var val1 = obj1[pro]
-        var val2 = obj2[pro]
-        if (val1 < val2) { // 升序
-          return -1
-        } else if (val1 > val2) {
-          return 1
-        } else {
-          return 0
-        }
-      }
-    },
-    listenSelection(data) {
-      this.company_selection = data
-    },
     clickMainBtn() {
-      this.multipleSelection.sort(this.compare('ts_code'))
-      this.multiLineVisible = !this.multiLineVisible
-    },
-    closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === tag.ts_code) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
-      this.multipleSelection.sort(this.compare('ts_code'))
-    },
-    showCharts() {
-      const multipleSelection = []
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        multipleSelection.push({
-          ts_code: this.multipleSelection[i].ts_code,
-          name: this.multipleSelection[i].name,
+      this.multipleSelection['fund'] = []
+      for (let i = 0; i < this.fund_selection.length; i++) {
+        this.multipleSelection['fund'].push({
+          ts_code: this.fund_selection[i].ts_code,
+          name: this.fund_selection[i].name,
           type: 'fund'
         })
       }
-      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
+      this.multiLineVisible = !this.multiLineVisible
+    },
+    closeTag(tag) {
+      for (let i = 0; i < this.multipleSelection[tag.type].length; i++) {
+        if (this.multipleSelection[tag.type][i].ts_code === tag.ts_code) {
+          this.multipleSelection[tag.type].splice(i, 1)
+          break
+        }
+      }
+      for (let i = 0; i < this.fund_selection.length; i++) {
+        if (this.fund_selection[i].ts_code === tag.ts_code) {
+          this.$refs.multipleTable.toggleRowSelection(this.fund_selection[i])
+          break
+        }
+      }
+    },
+    showCharts() {
+      const multipleSelectionLength = this.multipleSelection['company'].length +
+        this.multipleSelection['index'].length +
+        this.multipleSelection['fund'].length
+      if (multipleSelectionLength <= 0 || multipleSelectionLength > 10) {
         Message({
           // message: error.message,
           message: 'The selected items should be more than 0 and less than 10',
@@ -230,23 +221,26 @@ export default {
         return
       }
       this.$router.push({
-        name: 'NavChart',
+        name: 'CloseChart',
         params: {
-          codes: multipleSelection
+          codes: this.multipleSelection
         }
       })
       this.multiLineVisible = false
     },
 
     drawLine(item) {
-      const multipleSelection = []
-      multipleSelection.push({
-        ts_code: item.ts_code,
-        name: item.name,
-        type: 'fund'
-      })
+      const multipleSelection = {
+        'fund': [
+          {
+            ts_code: item.ts_code,
+            name: item.name,
+            type: 'fund'
+          }
+        ]
+      }
       this.$router.push({
-        name: 'NavChart',
+        name: 'CloseChart',
         params: {
           codes: multipleSelection
         }
@@ -287,7 +281,7 @@ export default {
       this.getList()
     },
     handleInput(event) {
-      if(event==='') {
+      if (event === '') {
         this.handleClear()
       }
     },
@@ -326,7 +320,7 @@ export default {
       this.getList()
     },
     handleSelectionChange(rows) {
-      this.multipleSelection = rows
+      this.fund_selection = rows
     },
     getSortClass: function(key) {
       const sort = this.listQuery.ordering

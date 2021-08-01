@@ -17,8 +17,8 @@ export default {
           ts_code_list: [],
           name_list: [],
           type_list: [],
-          timeLine: [],
-          closeData: []
+          time_line: [],
+          close_data: []
         }
       }
     },
@@ -53,7 +53,7 @@ export default {
             lineStyle: {
               width: 1
             },
-            data: this.form.closeData[i]
+            data: this.form.close_data[i]
           })
         }
       }
@@ -83,7 +83,7 @@ export default {
       this.chart.setOption({
 
         title: {
-          text: 'K线图',
+          text: '对比图',
           x: 'center',
           align: 'right'
         },
@@ -133,7 +133,7 @@ export default {
             type: 'category',
             boundaryGap: false,
             axisLine: { onZero: false },
-            data: this.form.timeLine
+            data: this.form.time_line
           }
         ],
         yAxis: [

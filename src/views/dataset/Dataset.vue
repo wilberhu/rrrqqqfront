@@ -149,7 +149,7 @@
   import Pagination from '@/components/Pagination'
 
   export default {
-    name: 'Dataset',
+    name: 'DatasetList',
     components: { Pagination },
     data() {
       return {

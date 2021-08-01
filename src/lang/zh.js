@@ -23,6 +23,7 @@ export default {
     edit_stock_picking: '编辑选股策略',
     strategy_result: '策略结果',
     stock_list: '股票列表',
+    select_list: '筛选列表',
     composition: '组合',
     composition_list: '组合列表',
     create_composition: '创建组合',

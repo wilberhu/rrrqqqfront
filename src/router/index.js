@@ -153,12 +153,6 @@ export const constantRoutes = [
         component: () => import('@/views/charts/close/index'),
         name: 'CloseChart',
         meta: { title: 'close' }
-      },
-      {
-        path: 'nav',
-        component: () => import('@/views/charts/nav/index'),
-        name: 'NavChart',
-        meta: { title: 'nav' }
       }
     ]
   },
@@ -207,7 +201,7 @@ export const constantRoutes = [
       {
         path: 'stock_picking_list',
         component: () => import('@/views/strategy/StockPickingList'),
-        name: 'StrategyPickingList',
+        name: 'StockPickingList',
         meta: { title: 'stock_picking_list', icon: 'list' }
       },
       {
@@ -225,9 +219,16 @@ export const constantRoutes = [
       },
       {
         path: 'stock_list',
-        component: () => import('@/views/strategy/select_list/stock'),
+        component: () => import('@/views/strategy/stock_list/stock'),
         name: 'StockList',
-        meta: { title: 'stock_list', icon: 'list' }
+        meta: { title: 'stock_list', icon: 'list' },
+        hidden: true
+      },
+      {
+        path: 'select_list',
+        component: () => import('@/views/strategy/select_list/stock'),
+        name: 'SelectList',
+        meta: { title: 'select_list', icon: 'list' }
       }
     ]
   },
@@ -246,7 +247,7 @@ export const constantRoutes = [
         path: 'list',
         component: () => import('@/views/composition/list'),
         name: 'CompositionList',
-        meta: { title: 'composition_list', noCache: true, icon: 'list' }
+        meta: { title: 'composition_list', icon: 'list' }
       },
       {
         path: 'create',

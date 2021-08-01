@@ -30,13 +30,13 @@
     <el-dialog :visible.sync="multiLineVisible" title="compare companies" width="500px">
       <el-form label-width="100px">
         <el-form-item label="companies: ">
-          <el-tag v-for="tag in inCompany" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in multipleSelection['company']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
         </el-form-item>
         <el-form-item label="indexes: ">
-          <el-tag v-for="tag in inIndex" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in multipleSelection['index']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
         </el-form-item>
         <el-form-item label="funds: ">
-          <el-tag v-for="tag in inFund" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
         </el-form-item>
       </el-form>
 
@@ -65,22 +65,15 @@ export default {
     return {
       activeName: 'company',
       multiLineVisible: false,
-      multipleSelection: [],
+      multipleSelection: {
+        company: [],
+        index: [],
+        fund: []
+      },
       company_selection: [],
       index_selection: [],
       fund_selection: [],
       delete_selection: undefined
-    }
-  },
-  computed: {
-    inCompany: function() {
-      return this.multipleSelection.filter(i => i.type === 'company')
-    },
-    inIndex: function() {
-      return this.multipleSelection.filter(i => i.type === 'index')
-    },
-    inFund: function() {
-      return this.multipleSelection.filter(i => i.type === 'fund')
     }
   },
   created() {
@@ -118,43 +111,46 @@ export default {
       this.fund_selection = data
     },
     clickMainBtn() {
-      this.multipleSelection = []
+      this.multipleSelection['company'] = []
       for (let i = 0; i < this.company_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['company'].push({
           ts_code: this.company_selection[i].ts_code,
           name: this.company_selection[i].name,
           type: 'company'
         })
       }
+      this.multipleSelection['index'] = []
       for (let i = 0; i < this.index_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['index'].push({
           ts_code: this.index_selection[i].ts_code,
           name: this.index_selection[i].name,
           type: 'index'
         })
       }
+      this.multipleSelection['fund'] = []
       for (let i = 0; i < this.fund_selection.length; i++) {
-        this.multipleSelection.push({
+        this.multipleSelection['fund'].push({
           ts_code: this.fund_selection[i].ts_code,
           name: this.fund_selection[i].name,
           type: 'fund'
         })
       }
-      this.multipleSelection.sort(this.compare('ts_code'))
       this.multiLineVisible = !this.multiLineVisible
     },
     closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === tag.ts_code) {
-          this.multipleSelection.splice(i, 1)
+      for (let i = 0; i < this.multipleSelection[tag.type].length; i++) {
+        if (this.multipleSelection[tag.type][i].ts_code === tag.ts_code) {
+          this.multipleSelection[tag.type].splice(i, 1)
           break
         }
       }
       this.delete_selection = tag.ts_code
-      this.multipleSelection.sort(this.compare('ts_code'))
     },
     showCharts() {
-      if (this.multipleSelection.length <= 0 || this.multipleSelection.length > 10) {
+      const multipleSelectionLength = this.multipleSelection['company'].length +
+        this.multipleSelection['index'].length +
+        this.multipleSelection['fund'].length
+      if (multipleSelectionLength <= 0 || multipleSelectionLength > 10) {
         Message({
           // message: error.message,
           message: 'The selected items should be more than 0 and less than 10',

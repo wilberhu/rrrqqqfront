@@ -11,7 +11,7 @@
           size="mini"
           placeholder="title"
         />
-        <el-button class="date-picker" size="mini" type="primary" style="margin-left: 16px;" @click="drawer = true">
+        <el-button class="data-picker" size="mini" type="primary" style="margin-left: 16px;" @click="drawer = true">
           展开
         </el-button>
       </div>
@@ -81,19 +81,20 @@ const defaultForm = {
   id: undefined,
   title: 'MyStrategy',
   code:
-`import backtrader as bt
-from ifund.strategyFilter import dailyHold
-class MyStrategy(bt.Strategy):
+`import pandas as pd
 
-    def __init__(self):
-        #To do
-
-    @dailyHold
-    def next(self):
-        #To do
-
-    def log(self, txt, dt=None,doprint=False):
-        #To do`
+param = {
+}
+#运行主函数
+def main(startTime, endTime, allfund, commission, fold, param):
+    df = pd.DataFrame()
+    ret = {
+        'df': df,
+        'columns': df.columns,
+        'path': path,
+        'activities': res
+    }
+    return ret`
 }
 
 export default {
@@ -146,14 +147,6 @@ export default {
       return this.$store.getters.language
     }
   },
-  watch: {
-    period() {
-      if (this.period && this.period.length === 2) {
-        this.postForm.start_date = this.period[0]
-        this.postForm.end_date = this.period[1]
-      }
-    }
-  },
   created() {
     if (this.isEdit) {
       this.postForm.id = this.$route.params && this.$route.params.id
@@ -169,9 +162,6 @@ export default {
       fetchItem(this.postForm.id)
         .then(response => {
           this.postForm.title = response.title
-          this.postForm.stock = response.stock
-          this.postForm.benchmark = response.benchmark
-          this.period = [response.start_date, response.end_date]
           this.setTagsViewTitle()
         })
         .then(
@@ -295,7 +285,7 @@ export default {
     margin-left: 5px;
     margin-top: 3px;
   }
-  .date-picker {
+  .data-picker {
     float: right;
     position: relative;
     margin-right: 15px;

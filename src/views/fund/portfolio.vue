@@ -84,7 +84,7 @@ import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
-  name: 'FundPortfolio',
+  name: 'FundPortfolioComponent',
   components: {
     Pagination
   },

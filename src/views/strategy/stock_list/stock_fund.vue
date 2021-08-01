@@ -40,11 +40,6 @@
           {{ scope.row.custodian }}
         </template>
       </el-table-column>
-      <el-table-column sortable prop="name" :label="$t('table.basic_fund.name')" :class-name="getSortClass('name')">
-        <template slot-scope="scope">
-          {{ scope.row.name }}
-        </template>
-      </el-table-column>
       <el-table-column sortable prop="fund_type" :label="$t('table.basic_fund.fund_type')" :class-name="getSortClass('fund_type')">
         <template slot-scope="scope">
           {{ scope.row.fund_type }}
@@ -181,24 +176,6 @@ export default {
     Pagination
   },
   directives: { waves },
-  filters: {
-    statusFilter(status) {
-      const statusMap = {
-        L: 'success',
-        P: 'warning',
-        D: 'danger'
-      }
-      return statusMap[status]
-    },
-    isHsFilter(status) {
-      const statusMap = {
-        H: 'H（沪股通）',
-        S: 'S（深股通）',
-        N: 'N（否）'
-      }
-      return statusMap[status]
-    }
-  },
   props: {
     deleteSelection: {
       type: String,
@@ -246,44 +223,18 @@ export default {
     this.getList()
   },
   methods: {
-    handleTabClick(tab, event) {
-      // console.log(tab, event)
-    },
-    // 定义排序规则
-    compare(pro) {
-      return function(obj1, obj2) {
-        var val1 = obj1[pro]
-        var val2 = obj2[pro]
-        if (val1 < val2) { // 升序
-          return -1
-        } else if (val1 > val2) {
-          return 1
-        } else {
-          return 0
-        }
-      }
-    },
-    listenSelection(data) {
-      this.company_selection = data
-    },
-    closeTag(tag) {
-      for (let i = 0; i < this.multipleSelection.length; i++) {
-        if (this.multipleSelection[i].ts_code === tag.ts_code) {
-          this.$refs.multipleTable.toggleRowSelection(this.multipleSelection[i])
-          break
-        }
-      }
-      this.multipleSelection.sort(this.compare('ts_code'))
-    },
     drawLine(item) {
-      const multipleSelection = []
-      multipleSelection.push({
-        ts_code: item.ts_code,
-        name: item.name,
-        type: 'fund'
-      })
+      const multipleSelection = {
+        'fund': [
+          {
+            ts_code: item.ts_code,
+            name: item.name,
+            type: 'fund'
+          }
+        ]
+      }
       this.$router.push({
-        name: 'NavChart',
+        name: 'CloseChart',
         params: {
           codes: multipleSelection
         }

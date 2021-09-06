@@ -68,7 +68,7 @@ export const constantRoutes = [
         path: 'dashboard',
         component: () => import('@/views/dashboard/index'),
         name: 'Dashboard',
-        meta: { title: 'dashboard', icon: 'dashboard', affix: true }
+        meta: { title: 'dashboard', icon: 'dashboard', affix: true, noCache: true }
       }
     ]
   },
@@ -195,7 +195,7 @@ export const constantRoutes = [
         path: 'edit/:id(\\d+)',
         component: () => import('@/views/strategy/edit'),
         name: 'EditStrategy',
-        meta: { title: 'edit_strategy', noCache: true },
+        meta: { title: 'edit_strategy' },
         hidden: true
       },
       {
@@ -214,7 +214,7 @@ export const constantRoutes = [
         path: 'edit_stock_picking/:id(\\d+)',
         component: () => import('@/views/strategy/EditStockPicking'),
         name: 'EditStockPicking',
-        meta: { title: 'edit_stock_picking', noCache: true },
+        meta: { title: 'edit_stock_picking' },
         hidden: true
       },
       {

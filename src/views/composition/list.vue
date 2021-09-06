@@ -92,7 +92,7 @@
 
 <script>
 import { Message } from 'element-ui'
-import { fetchList, getItem, createItem, updateItem, deleteItem,  } from '@/api/composition'
+import { fetchList, deleteItem } from '@/api/composition'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -146,11 +146,7 @@ export default {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+        this.$refs.multipleTable.clearSelection()
       })
     },
     handleSizeChange(val) {
@@ -200,18 +196,6 @@ export default {
       }).catch(message => {
         console.log('message======================', message)
         this.$message.error('delete error')
-      })
-    },
-    // 查看结果
-    viewResult(index, row) {
-      fetchResult(row.id).then(response => {
-        this.listLoading = false
-        this.$router.push({
-          name: 'StrategyResult',
-          params: {
-            strategy_result: response
-          }
-        })
       })
     },
     // 定义排序规则

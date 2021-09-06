@@ -91,8 +91,8 @@
 <script>
 import Chart from '@/components/Charts/closeMarker'
 import { fetchCompanyClose } from '@/api/histData'
-import { fetchAllCompanies, fetchAllIndexes } from '@/api/stockBasic'
-import { fetchAllList as fetchAllFunds } from '@/api/fundBasic'
+import { queryCompanies, queryIndexes } from '@/api/stockBasic'
+import { queryFundsBasic } from '@/api/fundBasic'
 import { Message } from 'element-ui'
 
 export default {
@@ -103,11 +103,6 @@ export default {
       listLoading: true,
       typeOptions: ['company', 'index', 'fund'],
       typeList: ['company'],
-      datalist: {
-        company: [],
-        index: [],
-        fund: []
-      },
       show: false,
       form: {
         ts_code_list: [],
@@ -132,11 +127,6 @@ export default {
         fund: ''
       }
     }
-  },
-  mounted() {
-    this.getAllCompanies()
-    this.getAllIndexes()
-    this.getAllFunds()
   },
   activated() {
     if (this.$route.params.codes) {
@@ -187,68 +177,43 @@ export default {
       this.$router.go(-1)
     },
     querySearchAsync(queryString, cb, key) {
-      var results = queryString ? this.datalist[key].filter(this.createContainsFilter(queryString)) : this.datalist[key]
-      clearTimeout(this.timeout)
-      this.timeout = setTimeout(() => {
-        cb(results)
-      }, 0)
-    },
-    createContainsFilter(queryString) {
-      return (company) => {
-        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
+      if (key === 'company') {
+        queryCompanies({ q: queryString }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
+      } else if (key === 'index') {
+        queryIndexes({ q: queryString }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
+      } else if (key === 'fund') {
+        queryFundsBasic({ q: queryString }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
       }
-    },
-    getAllCompanies() {
-      this.listLoading = true
-      fetchAllCompanies().then(response => {
-        this.listLoading = false
-        this.datalist.company = []
-        for (const item of response) {
-          this.datalist.company.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-
-    getAllIndexes() {
-      this.listLoading = true
-      fetchAllIndexes().then(response => {
-        this.listLoading = false
-        this.datalist.index = []
-        for (const item of response) {
-          this.datalist.index.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-    getAllFunds() {
-      this.listLoading = true
-      fetchAllFunds().then(response => {
-        this.listLoading = false
-        this.datalist.fund = []
-        for (const item of response) {
-          this.datalist.fund.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
     },
     handleClose(tag, key) {
       this.dynamicTags[key].splice(this.dynamicTags[key].indexOf(tag), 1)

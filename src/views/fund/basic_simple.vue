@@ -17,7 +17,7 @@
           v-model="form.ts_code"
           :fetch-suggestions="querySearchAsync"
           placeholder="请输入内容"
-          style="width: 220px;"
+          style="width: 300px;"
           clearable
           @select="handleSelect($event)"
           @clear="handleClear($event)"
@@ -106,14 +106,14 @@
 </template>
 
 <script>
-import { fetchList, fetchAllList as fetchAllFunds } from '@/api/fundBasic'
+import { fetchList, queryFundsBasic } from '@/api/fundBasic'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination'
 import { Message } from 'element-ui' // Secondary package based on el-pagination
 import FundPortfolio from './portfolio'
 
 export default {
-  name: 'FundPortfolio',
+  name: 'FundPortfolioComponent',
   components: {
     Pagination,
     FundPortfolio
@@ -163,9 +163,6 @@ export default {
         ts_code: undefined,
         name: undefined,
         type: 'fund'
-      },
-      datalist: {
-        index: []
       }
     }
   },
@@ -176,7 +173,6 @@ export default {
   },
   created() {
     this.getList()
-    this.getAllFunds()
   },
   methods: {
     handleTabClick(tab, event) {
@@ -261,46 +257,34 @@ export default {
       })
     },
     querySearchAsync(queryString, cb) {
-      var results = queryString ? this.datalist[this.form.type].filter(this.createContainsFilter(queryString)) : this.datalist[this.form.type]
-      clearTimeout(this.timeout)
-      this.timeout = setTimeout(() => {
-        cb(results)
-      }, 0)
-    },
-    createContainsFilter(queryString) {
-      return (company) => {
-        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
-      }
+      queryFundsBasic({ q: queryString }).then(response => {
+        var list = []
+        for (const item of response.results) {
+          list.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        cb(list)
+      })
     },
     handleSelect(event) {
-      this.listQuery.ts_code = event.ts_code
+      this.form.ts_code = event.ts_code
+      this.form.name = event.name
+      this.listQuery.ts_code = this.form.ts_code
       this.getList()
     },
     handleClear(event) {
-      this.listQuery.ts_code = undefined
+      this.form.ts_code = undefined
+      this.form.name = undefined
+      this.listQuery.ts_code = this.form.ts_code
       this.getList()
     },
     handleInput(event) {
       if (event === '') {
         this.handleClear()
       }
-    },
-    getAllFunds() {
-      this.listLoading = true
-      fetchAllFunds().then(response => {
-        this.listLoading = false
-        this.datalist.fund = []
-        for (const item of response) {
-          this.datalist.fund.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
     },
     sortChange(data) {
       const { prop, order } = data

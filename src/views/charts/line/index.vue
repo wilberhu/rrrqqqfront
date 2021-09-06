@@ -30,8 +30,8 @@
 <script>
 import Chart from '@/components/Charts/lineMarker'
 import { getCompanyHistData, getIndexHistData, getFundHistData } from '@/api/histData'
-import { fetchAllCompanies, fetchAllIndexes } from '@/api/stockBasic'
-import { fetchAllList as fetchAllFunds } from '@/api/fundBasic'
+import { queryCompanies, queryIndexes } from '@/api/stockBasic'
+import { queryFundsBasic } from '@/api/fundBasic'
 
 export default {
   name: 'LineChart',
@@ -46,18 +46,8 @@ export default {
         type: 'company',
         histData: null,
         maData: null
-      },
-      datalist: {
-        company: [],
-        index: [],
-        fund: []
       }
     }
-  },
-  mounted() {
-    this.getAllCompanies()
-    this.getAllIndexes()
-    this.getAllFunds()
   },
   activated() {
     if (this.$route.params.ts_code) {
@@ -101,74 +91,48 @@ export default {
       this.$router.go(-1)
     },
     querySearchAsync(queryString, cb) {
-      var results = queryString ? this.datalist[this.form.type].filter(this.createContainsFilter(queryString)) : this.datalist[this.form.type]
-      clearTimeout(this.timeout)
-      this.timeout = setTimeout(() => {
-        cb(results)
-      }, 0)
-    },
-    createContainsFilter(queryString) {
-      return (company) => {
-        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
+      if (this.form.type === 'company') {
+        queryCompanies({ q: queryString }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
+      } else if (this.form.type === 'index') {
+        queryIndexes({ q: queryString }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
+      } else if (this.form.type === 'fund') {
+        queryFundsBasic({ q: queryString, market: 'E' }).then(response => {
+          var list = []
+          for (const item of response.results) {
+            list.push({
+              value: item.ts_code + ' - ' + item.name,
+              ts_code: item.ts_code,
+              name: item.name
+            })
+          }
+          cb(list)
+        })
       }
     },
     handleSelect(event) {
       this.form.ts_code = event.ts_code
       this.form.name = event.name
       this.drawCharts()
-    },
-
-    getAllCompanies() {
-      this.listLoading = true
-      fetchAllCompanies().then(response => {
-        this.listLoading = false
-        this.datalist.company = []
-        for (const item of response) {
-          this.datalist.company.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-
-    getAllIndexes() {
-      this.listLoading = true
-      fetchAllIndexes().then(response => {
-        this.listLoading = false
-        this.datalist.index = []
-        for (const item of response) {
-          this.datalist.index.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-    getAllFunds() {
-      this.listLoading = true
-      fetchAllFunds({ market: 'E' }).then(response => {
-        this.listLoading = false
-        this.datalist.fund = []
-        for (const item of response) {
-          this.datalist.fund.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
     }
   }
 }

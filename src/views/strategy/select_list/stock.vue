@@ -1,19 +1,5 @@
 <template>
   <div class="tab-container">
-
-    <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
-<!--    <vue-fab-->
-<!--      :main-btn-color="'#2196F3'"-->
-<!--      :fab-animate-bezier="'ease-out'"-->
-<!--      :fab-auto-hide-animate-model="'alive'"-->
-<!--      :scroll-auto-hide="false"-->
-<!--      prop="open"-->
-<!--      style="right: 13%; bottom: 15%"-->
-<!--      icon="multiline_chart"-->
-<!--      size="big"-->
-<!--      fab-item-animate="alive"-->
-<!--      @clickMainBtn="clickMainBtn"/>-->
-
     <vue-fab
       :main-btn-color="'#2196F3'"
       :fab-animate-bezier="'ease-out'"
@@ -32,6 +18,9 @@
       <el-tab-pane label="fund" name="fund">
         <StockFund @fund_multiple_selection="listenFundSelection" :deleteSelection="delete_selection" />
       </el-tab-pane>
+      <el-tab-pane label="company" name="company">
+        <StockCompany @company_multiple_selection="listenCompanySelection" :deleteSelection="delete_selection" />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- combine对话框 -->
@@ -40,8 +29,11 @@
         <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCombineFullscreen(!combineFullscreen)"></i>
       </div>
       <el-form label-width="100px">
-        <el-form-item label="funds: ">
-          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        <el-form-item label="funds: " v-if="activeName==='fund'">
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
+        </el-form-item>
+        <el-form-item label="companies: " v-if="activeName==='company'">
+          <el-tag v-for="tag in multipleSelection['company']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
         </el-form-item>
         <el-form-item>
           <el-date-picker
@@ -50,6 +42,8 @@
             format="yyyyMMdd"
             value-format="yyyyMMdd"
             type="date"
+            :clearable="false"
+            :editable="false"
             aria-required="true"
             placeholder="选择日期"
             @blur="refreshChart()"
@@ -72,38 +66,43 @@
         <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCompareFullscreen(!compareFullscreen)"></i>
       </div>
       <el-form label-width="100px">
-        <el-form-item label="funds: ">
-          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} - {{ tag.name }}</el-tag>
+        <el-form-item label="funds: " v-if="activeName==='fund'">
+          <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
+        </el-form-item>
+        <el-form-item label="companies: " v-if="activeName==='company'">
+          <el-tag v-for="tag in multipleSelection['company']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
         </el-form-item>
       </el-form>
-      <CompareChart ref="CompareChart" :form="compareForm" :height="compareChartHeight"></CompareChart>
+      <CompareChart ref="CompareChart" :height="compareChartHeight"></CompareChart>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import StockFund from './stock_fund'
+import StockCompany from './stock_company'
 import CompareChart from './compare_chart'
 import StackLineChart from '@/views/composition/components/StackLineChart'
 import { fetchCompanyClose } from '@/api/histData'
 import { fetchCombineData } from '@/api/strategy'
 
 export default {
-  name: 'Basic',
+  name: 'SelectList',
   components: {
     StockFund,
+    StockCompany,
     CompareChart,
     StackLineChart
   },
   data() {
     return {
-      activeName: 'fund',
       multiLineVisible: false,
       multipleSelection: {
         company: [],
         index: [],
         fund: []
       },
+      activeName: 'fund',
       company_selection: [],
       index_selection: [],
       fund_selection: [],
@@ -115,6 +114,7 @@ export default {
       combineForm: {
         time_line: [],
         ts_code_list: [],
+        name_list: [],
         close_data: []
       },
       compareForm: {
@@ -240,7 +240,7 @@ export default {
       }
       var _this = this
       setTimeout(function() {
-        _this.$refs.CompareChart.$refs.Chart.draw()
+        _this.$refs.CompareChart.draw(_this.compareForm)
       }, 0)
     },
     getCompanyCloseData() {
@@ -249,13 +249,13 @@ export default {
           ts_code_list: [],
           type_list: []
         }
-        for (const key of this.typeList) {
-          for (let i = 0; i < this.multipleSelection[key].length; i++) {
-            data.ts_code_list.push(this.multipleSelection[key][i].ts_code)
-            data.type_list.push(key)
-          }
+
+        for (let i = 0; i < this.multipleSelection[this.activeName].length; i++) {
+          data.ts_code_list.push(this.multipleSelection[this.activeName][i].ts_code)
+          data.type_list.push(this.activeName)
         }
-        fetchCompanyClose(data, 'unit_nav').then(response => {
+
+        fetchCompanyClose(data, this.activeName === 'fund' ? 'unit_nav' : 'close').then(response => {
           resolve(response)
           setTimeout(() => {
           }, 1.5 * 1000)
@@ -271,13 +271,13 @@ export default {
           allfund: this.compositionForm.allfund,
           commission: this.compositionForm.commission
         }
-        for (const key of this.typeList) {
-          for (let i = 0; i < this.multipleSelection[key].length; i++) {
-            data.ts_code_list.push(this.multipleSelection[key][i].ts_code)
-            data.type_list.push(key)
-          }
+
+        for (let i = 0; i < this.multipleSelection[this.activeName].length; i++) {
+          data.ts_code_list.push(this.multipleSelection[this.activeName][i].ts_code)
+          data.type_list.push(this.activeName)
         }
-        fetchCombineData(data, 'unit_nav').then(response => {
+
+        fetchCombineData(data, this.activeName === 'fund' ? 'unit_nav' : 'close').then(response => {
           resolve(response)
           setTimeout(() => {
           }, 1.5 * 1000)

@@ -35,16 +35,16 @@
           {{ scope.row.ts_code }}
         </template>
       </el-table-column>
-      <el-table-column sortable fixed prop="name" :label="$t('table.daily_index.name')" :class-name="getSortClass('name')">
+      <el-table-column fixed prop="name" :label="$t('table.daily_index.name')" :class-name="getSortClass('name')">
         <template slot-scope="scope">
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <!--      <el-table-column sortable prop="trade_date" :label="$t('table.trade_date')">-->
-      <!--        <template slot-scope="scope">-->
-      <!--          <span>{{ scope.row.trade_date }}</span>-->
-      <!--        </template>-->
-      <!--      </el-table-column>-->
+      <el-table-column sortable prop="trade_date" :label="$t('table.daily_index.trade_date')">
+        <template slot-scope="scope">
+          <span>{{ scope.row.trade_date }}</span>
+        </template>
+      </el-table-column>
       <el-table-column sortable prop="close" :label="$t('table.daily_index.close')">
         <template slot-scope="scope">
           <span>{{ scope.row.close }}</span>
@@ -120,7 +120,7 @@
 </template>
 
 <script>
-import { fetchAllIndexes } from '@/api/stockBasic'
+import { queryIndexes } from '@/api/stockBasic'
 import { fetchIndexList } from '@/api/stockDaily'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
@@ -169,9 +169,6 @@ export default {
         ts_code: undefined,
         name: undefined,
         type: 'index'
-      },
-      datalist: {
-        index: []
       }
     }
   },
@@ -192,7 +189,6 @@ export default {
   },
   created() {
     this.getList()
-    this.getAllIndexes()
   },
   methods: {
     drawLine(item) {
@@ -220,46 +216,34 @@ export default {
       })
     },
     querySearchAsync(queryString, cb) {
-      var results = queryString ? this.datalist[this.form.type].filter(this.createContainsFilter(queryString)) : this.datalist[this.form.type]
-      clearTimeout(this.timeout)
-      this.timeout = setTimeout(() => {
-        cb(results)
-      }, 0)
-    },
-    createContainsFilter(queryString) {
-      return (company) => {
-        return (company.value.toLowerCase().indexOf(queryString.toLowerCase()) >= 0)
-      }
+      queryIndexes({q: queryString}).then(response => {
+        var list = []
+        for (const item of response.results) {
+          list.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        cb(list)
+      })
     },
     handleSelect(event) {
-      this.listQuery.ts_code = event.ts_code
+      this.form.ts_code = event.ts_code
+      this.form.name = event.name
+      this.listQuery.ts_code = this.form.ts_code
       this.getList()
     },
     handleClear(event) {
-      this.listQuery.ts_code = undefined
+      this.form.ts_code = undefined
+      this.form.name = undefined
+      this.listQuery.ts_code = this.form.ts_code
       this.getList()
     },
     handleInput(event) {
       if(event==='') {
         this.handleClear()
       }
-    },
-    getAllIndexes() {
-      this.listLoading = true
-      fetchAllIndexes().then(response => {
-        this.listLoading = false
-        this.datalist.index = []
-        for (const item of response) {
-          this.datalist.index.push({
-            value: item.ts_code + ' - ' + item.name,
-            ts_code: item.ts_code,
-            name: item.name
-          })
-        }
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
     },
     sortChange(data) {
       const { prop, order } = data

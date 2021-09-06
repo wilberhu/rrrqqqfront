@@ -147,35 +147,42 @@ export default {
       return this.$store.getters.language
     }
   },
-  created() {
+  async created() {
     if (this.isEdit) {
       this.postForm.id = this.$route.params && this.$route.params.id
-      this.fetchData(this.postForm.id)
+      this.postForm.title = (await this.getItem()).title
+      this.postForm.code = await this.getItemCode()
     } else {
       this.postForm = Object.assign({}, defaultForm)
-      this.getList()
     }
+    this.getDatasetList()
     this.tempRoute = Object.assign({}, this.$route)
   },
+  updated() {
+    this.setTagsViewTitle() // set tagsview title
+    this.setPageTitle() // set page title
+  },
   methods: {
-    fetchData() {
-      fetchItem(this.postForm.id)
-        .then(response => {
-          this.postForm.title = response.title
-          this.setTagsViewTitle()
+    getItem() {
+      return new Promise(resolve => {
+        fetchItem(this.postForm.id).then(response => {
+          resolve(response)
         })
-        .then(
-          fetchItemCode(this.postForm.id).then(code => {
-            this.postForm.code = code
-          }))
-        .then(
-          this.getList()
-        )
+      })
+    },
+    getItemCode() {
+      return new Promise(resolve => {
+        fetchItemCode(this.postForm.id).then(code => {
+          resolve(code)
+        })
+      })
     },
     setTagsViewTitle() {
-      const title = this.lang === 'zh' ? '编辑策略' : 'Edit Strategy'
-      const route = Object.assign({}, this.tempRoute, { title: `${title}-${this.postForm.id}` })
+      const route = Object.assign({}, this.tempRoute, { title: this.isEdit ? `${'Edit Strategy'} - ${this.postForm.id}` : `${'Create Strategy'}` })
       this.$store.dispatch('tagsView/updateVisitedView', route)
+    },
+    setPageTitle() {
+      document.title = this.isEdit ? `${'Edit Strategy'} - ${this.postForm.id}` : `${'Create Strategy'}`
     },
     submit() {
       this.loading = true
@@ -183,15 +190,15 @@ export default {
         if (this.isEdit) {
           updateItem(this.postForm.id, this.postForm).then(response => {
             this.loading = false
-            this.$message.success("Update successfully!")
-          }).catch(error => {
+            this.$message.success('Update successfully!')
+          }).catch(() => {
             this.loading = false
           })
         } else {
           createItem(this.postForm).then(response => {
             this.loading = false
             this.postForm = Object.assign({}, response)
-            this.$message.success("Update successfully!")
+            this.$message.success('Update successfully!')
             this.$router.push({
               path: '/strategy/edit/' + this.postForm.id
             })
@@ -228,7 +235,7 @@ export default {
       }
     },
 
-    getList() {
+    getDatasetList() {
       this.listQuery.offset = this.offset
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
@@ -243,7 +250,7 @@ export default {
     },
     handleSearch() {
       this.page = 1
-      this.getList()
+      this.getDatasetList()
     },
     sortChange(data) {
       const { prop, order } = data

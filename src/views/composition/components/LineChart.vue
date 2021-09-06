@@ -93,7 +93,7 @@ export default {
         _this.setOptions(_this.chartDataNorm, _this.benchmarkNorm)
       })
     },
-    updateData(chartData, benchmark, clear=false) {
+    updateData(chartData, benchmark, clear = false) {
       if (clear) {
         this.chart.dispose()
         this.chart = null

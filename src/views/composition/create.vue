@@ -6,7 +6,7 @@
 import CompositionDetail from './components/CompositionDetail'
 
 export default {
-  name: 'CreateForm',
+  name: 'CreateComposition',
   components: { CompositionDetail }
 }
 </script>

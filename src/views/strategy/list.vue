@@ -117,11 +117,7 @@ export default {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+        this.$refs.multipleTable.clearSelection()
       })
     },
     handleSizeChange(val) {
@@ -137,6 +133,7 @@ export default {
       this.sortByColumn(prop, order)
     },
     handleSelectionChange(rows) {
+      console.log(rows)
       this.multipleSelection = rows
     },
     sortByColumn(prop, order) {

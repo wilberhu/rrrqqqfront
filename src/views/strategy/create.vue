@@ -6,7 +6,7 @@
 import StrategyDetail from './components/StrategyDetail'
 
 export default {
-  name: 'CreateForm',
+  name: 'CreateStrategy',
   components: { StrategyDetail }
 }
 </script>

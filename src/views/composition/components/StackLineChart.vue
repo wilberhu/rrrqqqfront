@@ -76,19 +76,19 @@ export default {
       this.chart = echarts.init(this.$el, 'macarons')
     },
     makeGridData(chartData) {
-      let ret = []
+      var ret = []
       ret.push(
         echarts.util.merge({
-          name: chartData.ts_code_list? chartData.ts_code_list[0] : '',
+          name: chartData.ts_code_list[0],
           type: 'line',
           xAxisIndex: 1,
           yAxisIndex: 1,
           smooth: false,
           hoverAnimation: false,
-          data: chartData.ts_code_list? chartData.close_data[0] : ''
+          data: chartData.ts_code_list ? chartData.close_data[0] : ''
         })
       )
-      for(let i = 1; i < chartData.ts_code_list.length; i++){
+      for (let i = 1; i < chartData.ts_code_list.length; i++) {
         ret.push(
           echarts.util.merge({
             type: 'line',
@@ -117,9 +117,12 @@ export default {
           }
         },
         legend: {
-          data: chartData.ts_code_list,
+          // data: chartData.ts_code_list,
           left: 10,
-          top: 25
+          top: 25,
+          formatter: function(ts_code) {
+            return ts_code + ' ' + chartData.name_list[chartData.ts_code_list.indexOf(ts_code)]
+          }
         },
         toolbox: {
           feature: {
@@ -131,7 +134,7 @@ export default {
           }
         },
         axisPointer: {
-          link: {xAxisIndex: 'all'}
+          link: { xAxisIndex: 'all' }
         },
         dataZoom: [
           {
@@ -162,14 +165,14 @@ export default {
         xAxis: [
           {
             axisLabel: {
-              show: false,
+              show: false
             },
             type: 'category',
             boundaryGap: true,
             axisTick: {
               alignWithLabel: true
             },
-            axisLine: {onZero: true},
+            axisLine: { onZero: true },
             data: chartData.time_line
           },
           {
@@ -179,21 +182,21 @@ export default {
             axisTick: {
               alignWithLabel: true
             },
-            axisLine: {onZero: true},
-            data: chartData.time_line,
+            axisLine: { onZero: true },
+            data: chartData.time_line
           }
         ],
         yAxis: [
           {
             name: '资金占比',
             type: 'value',
-            scale : true
+            scale: false
           },
           {
             gridIndex: 1,
             name: '收益',
             type: 'value',
-            scale:true
+            scale: true
           }
         ],
         series: this.makeGridData(chartData),
@@ -209,7 +212,7 @@ export default {
             }
             let ret = chartDataGlobal.time_line[params[0].dataIndex] + '<br>'
             for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
-              if(params[params_index[i]] && params[params_index[i]].data) {
+              if (params[params_index[i]] && params[params_index[i]].data) {
                 ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName + ': ' + params[params_index[i]].data + '<br>'
               }
             }

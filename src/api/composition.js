@@ -17,14 +17,6 @@ export function calculateActivity(data) {
   })
 }
 
-export function fetchDataframe(data) {
-  return request({
-    url: '/api/compositions/dataframe/',
-    method: 'post',
-    data
-  })
-}
-
 export function fetchList(query) {
   return request({
     url: '/api/compositions/',

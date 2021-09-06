@@ -28,9 +28,9 @@ export function fetchItemPortfolioDownload(ts_code) {
   })
 }
 
-export function fetchAllList(params) {
+export function queryFundsBasic(params) {
   return request({
-    url: '/api/funds_basic/all/',
+    url: '/api/funds_basic/query/',
     method: 'get',
     params
   })

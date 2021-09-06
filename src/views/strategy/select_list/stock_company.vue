@@ -40,9 +40,9 @@
           {{ scope.row[item.field] }}
         </template>
       </el-table-column>
-      <el-table-column prop="nav_data" :label="$t('table.nav_data')">
+      <el-table-column prop="hist_data" :label="$t('table.hist_data')">
         <template slot-scope="scope">
-          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.nav_data') }}</el-button>
+          <el-button type="info" @click="drawLine(scope.row)">{{ $t('table.hist_data') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -98,15 +98,15 @@ import 'codemirror/mode/python/python.js'
 // theme css
 import 'codemirror/theme/eclipse.css'
 
-import { fetchList } from '@/api/fundBasic'
+import { fetchCompanyList } from '@/api/stockBasic'
 import { fetchAllList as fetchStockFilterList, createItem, updateItem, deleteItem, fetchItemCode, fetchItemData } from '@/api/stockFilter'
 import waves from '@/directive/waves' // Waves directive
 import Pagination from '@/components/Pagination'
 
 const defaultForm = {
   id: undefined,
-  title: 'FundFilter',
-  type: 'fund',
+  title: 'CompanyFilter',
+  type: 'company',
   code:
     `'''
 @description: 描述
@@ -114,16 +114,16 @@ const defaultForm = {
 '''
 import pandas as pd
 
-fund_nav_path = "tushare_data/data/tush_fund_nav/"
+company_nav_path = "tushare_data/data/tush_company/"
 
 def main():
-    df = pd.read_csv(fund_nav_path + "fund_nav_O.csv").fillna('')
+    df = pd.read_csv(company_nav_path + "company.csv").fillna('')
     return df
 `
 }
 
 export default {
-  name: 'StockFund',
+  name: 'StockCompany',
   components: {
     Pagination
   },
@@ -157,7 +157,7 @@ export default {
         id: undefined,
         title: '',
         code: '',
-        type: 'fund'
+        type: 'company'
       },
 
       fullscreen: false,
@@ -242,23 +242,21 @@ export default {
     },
     drawLine(item) {
       const multipleSelection = {
-        fund: [
+        company: [
           {
             ts_code: item.ts_code,
             name: item.name,
-            type: 'fund'
+            type: 'company'
           }
         ]
       }
       this.$router.push({
-        name: 'CloseChart',
-        params: {
-          codes: multipleSelection
-        }
+        name: 'LineChart',
+        params: multipleSelection.company[0]
       })
     },
     getStockFilterOptions() {
-      var param = { type: 'fund' }
+      var param = { type: 'company' }
       fetchStockFilterList(param).then(response => {
         this.stockFilterOptions = response
         setTimeout(() => {
@@ -267,30 +265,14 @@ export default {
     },
     initColumns() {
       this.columns = [
-        { field: 'ts_code', label: this.$t('table.basic_fund.ts_code'), width: '110' },
-        { field: 'name', label: this.$t('table.basic_fund.name') },
-        { field: 'management', label: this.$t('table.basic_fund.management') },
-        { field: 'custodian', label: this.$t('table.basic_fund.custodian') },
-        { field: 'fund_type', label: this.$t('table.basic_fund.fund_type') },
-        { field: 'found_date', label: this.$t('table.basic_fund.found_date') },
-        { field: 'due_date', label: this.$t('table.basic_fund.due_date') },
-        { field: 'list_date', label: this.$t('table.basic_fund.list_date') },
-        { field: 'issue_date', label: this.$t('table.basic_fund.issue_date') },
-        { field: 'delist_date', label: this.$t('table.basic_fund.delist_date') },
-        { field: 'issue_amount', label: this.$t('table.basic_fund.issue_amount') },
-        { field: 'm_fee', label: this.$t('table.basic_fund.m_fee') },
-        { field: 'c_fee', label: this.$t('table.basic_fund.c_fee') },
-        { field: 'duration_year', label: this.$t('table.basic_fund.duration_year') },
-        { field: 'p_value', label: this.$t('table.basic_fund.p_value') },
-        { field: 'min_amount', label: this.$t('table.basic_fund.min_amount') },
-        { field: 'exp_return', label: this.$t('table.basic_fund.exp_return') },
-        { field: 'status', label: this.$t('table.basic_fund.status') },
-        { field: 'invest_type', label: this.$t('table.basic_fund.invest_type') },
-        { field: 'type', label: this.$t('table.basic_fund.type') },
-        { field: 'trustee', label: this.$t('table.basic_fund.trustee') },
-        { field: 'purc_startdate', label: this.$t('table.basic_fund.purc_startdate') },
-        { field: 'redm_startdate', label: this.$t('table.basic_fund.redm_startdate') },
-        { field: 'market', label: this.$t('table.basic_fund.market') }
+        { field: 'ts_code', label: this.$t('table.company.ts_code'), width: '110' },
+        { field: 'name', label: this.$t('table.company.name') },
+        { field: 'area', label: this.$t('table.company.area') },
+        { field: 'industry', label: this.$t('table.company.area') },
+        { field: 'market', label: this.$t('table.company.market') },
+        { field: 'list_status', label: this.$t('table.company.list_status') },
+        { field: 'list_date', label: this.$t('table.company.list_date') },
+        { field: 'is_hs', label: this.$t('table.company.is_hs') }
       ]
     },
     getList() {
@@ -322,7 +304,7 @@ export default {
       } else {
         this.listQuery.offset = this.offset
         this.listLoading = true
-        fetchList(this.listQuery).then(response => {
+        fetchCompanyList(this.listQuery).then(response => {
           this.initColumns()
           this.list = response.results
           this.total = response.count
@@ -339,14 +321,14 @@ export default {
       this.stockFilterStrategy = Object.assign({}, event)
       this.multipleSelection = []
       this.$refs.multipleTable.clearSelection()
-      this.$emit('fund_multiple_selection', this.multipleSelection)
+      this.$emit('company_multiple_selection', this.multipleSelection)
       this.getList()
     },
     handleClear(event) {
       this.stockFilterStrategy = Object.assign({}, defaultForm)
       this.multipleSelection = []
       this.$refs.multipleTable.clearSelection()
-      this.$emit('fund_multiple_selection', this.multipleSelection)
+      this.$emit('company_multiple_selection', this.multipleSelection)
       this.getList()
     },
     switchFullscreen() {
@@ -376,6 +358,7 @@ export default {
       })
     },
     createData() {
+      console.log(this.stockFilterStrategy)
       createItem(this.stockFilterStrategy).then(() => {
         this.dialogFormVisible = false
         this.$notify({
@@ -485,7 +468,7 @@ export default {
     },
     handleSelectionChange(rows) {
       this.multipleSelection = rows
-      this.$emit('fund_multiple_selection', this.multipleSelection)
+      this.$emit('company_multiple_selection', this.multipleSelection)
     },
 
     onCmReady(cm) {

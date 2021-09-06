@@ -8,10 +8,11 @@ export function fetchCompanyList(params) {
   })
 }
 
-export function fetchAllCompanies() {
+export function queryCompanies(params) {
   return request({
-    url: '/api/companies/all/',
-    method: 'get'
+    url: '/api/companies/query/',
+    method: 'get',
+    params
   })
 }
 
@@ -23,9 +24,10 @@ export function fetchIndexList(params) {
   })
 }
 
-export function fetchAllIndexes() {
+export function queryIndexes(params) {
   return request({
-    url: '/api/indexes/all/',
-    method: 'get'
+    url: '/api/indexes/query/',
+    method: 'get',
+    params
   })
 }

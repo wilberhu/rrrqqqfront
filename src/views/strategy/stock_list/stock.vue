@@ -55,7 +55,7 @@ import StockIndex from './stock_index'
 import StockFund from './stock_fund'
 
 export default {
-  name: 'Basic',
+  name: 'StockList',
   components: {
     StockCompany,
     StockIndex,

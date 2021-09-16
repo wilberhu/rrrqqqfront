@@ -218,13 +218,6 @@ export const constantRoutes = [
         hidden: true
       },
       {
-        path: 'stock_list',
-        component: () => import('@/views/strategy/stock_list/stock'),
-        name: 'StockList',
-        meta: { title: 'stock_list', icon: 'list' },
-        hidden: true
-      },
-      {
         path: 'select_list',
         component: () => import('@/views/strategy/select_list/stock'),
         name: 'SelectList',

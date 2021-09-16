@@ -830,8 +830,7 @@ export default {
         msg.close()
       }).then(() => {
         this.updateActivities()
-      })
-        .catch(
+      }).catch(
           error => {
             msg.close()
             msg = this.$message({

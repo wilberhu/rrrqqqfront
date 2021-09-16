@@ -213,7 +213,9 @@ export default {
             let ret = chartDataGlobal.time_line[params[0].dataIndex] + '<br>'
             for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
               if (params[params_index[i]] && params[params_index[i]].data) {
-                ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName + ': ' + params[params_index[i]].data + '<br>'
+                ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName +
+                  ' ' + chartData.name_list[chartData.ts_code_list.indexOf(params[params_index[i]].seriesName)] +
+                  '（' + Math.round(params[params_index[i]].data * 10000 / params[params_index[0]].data) / 100 + '%）: ' + params[params_index[i]].data + '<br>'
               }
             }
             return ret

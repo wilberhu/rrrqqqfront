@@ -13,7 +13,6 @@
               >Pick Filter</el-button>
               <el-form-item label="开始日期">
                 <el-date-picker
-                  :picker-options="datePickerOptions"
                   v-model="factorForm.startTime"
                   format="yyyyMMdd"
                   value-format="yyyyMMdd"
@@ -25,7 +24,6 @@
               </el-form-item>
               <el-form-item label="结束日期">
                 <el-date-picker
-                  :picker-options="datePickerOptions"
                   v-model="factorForm.endTime"
                   format="yyyyMMdd"
                   value-format="yyyyMMdd"
@@ -96,7 +94,6 @@
           </el-form-item> -->
           <el-form-item label="开始日期">
             <el-date-picker
-              :picker-options="datePickerOptions"
               v-model="strategyForm.startTime"
               format="yyyyMMdd"
               value-format="yyyyMMdd"
@@ -108,7 +105,6 @@
           </el-form-item>
           <el-form-item label="结束日期">
             <el-date-picker
-              :picker-options="datePickerOptions"
               v-model="strategyForm.endTime"
               format="yyyyMMdd"
               value-format="yyyyMMdd"
@@ -150,7 +146,7 @@
 
     <hr>
 
-    <strategy-composition-detail ref="compositionDetail" :is-edit="false" :portfolio="portfolio" style="padding:0;" @getAllCompaniesDone="getAllCompaniesDone" />
+    <composition-detail ref="compositionDetail" :is-edit="false" :portfolio="portfolio" style="padding:0;" />
 
     <!-- 编辑因子弹出框 -->
     <el-dialog :visible.sync="editFactorVisible" title="Select filters">
@@ -193,15 +189,13 @@
 
 <script>
 import { fetchItem, createItem, updateItem } from '@/api/stockPicking'
-import { fetchTradeCalender } from '@/api/composition'
 import { fetchAllList as fetchFilterOptionList } from '@/api/filterOption'
 import { fetchAllList as fetchStrategyList, fetchItemParam as fetchStrategyParam } from '@/api/strategy'
 import { Message } from 'element-ui'
-import StrategyCompositionDetail from '../../composition/components/StrategyCompositionDetail'
+import CompositionDetail from '../../composition/components/CompositionDetail'
 
 const end = new Date()
 const start = new Date(end.getTime() - 3600 * 1000 * 24 * 365)
-let tradeCalender = []
 // const formatDate = function(timestamp, format = 'yyyy-MM-dd hh:mm:ss') {
 const formatDate = function(timestamp, format = 'yyyyMMdd') {
   const date = new Date(timestamp)
@@ -229,7 +223,7 @@ const formatDate = function(timestamp, format = 'yyyyMMdd') {
 
 export default {
   name: 'StockPickingDetail',
-  components: { StrategyCompositionDetail },
+  components: { CompositionDetail },
   props: {
     isEdit: {
       type: Boolean,
@@ -283,11 +277,6 @@ export default {
       editFactorVisible: false,
       loading: false,
       calculateDisabled: true,
-      datePickerOptions: {
-        disabledDate(date) {
-          return tradeCalender.indexOf(formatDate(date, 'yyyyMMdd')) === -1
-        }
-      },
       filterMethod(query, item) {
         return item.label.indexOf(query) > -1
       },
@@ -345,7 +334,6 @@ export default {
       this.updateState()
     }
 
-    this.getTradeCalender()
     this.getFilterOptions()
     this.getStrategyOptions()
 
@@ -354,13 +342,6 @@ export default {
   methods: {
     handleTabClick(tab, event) {
       // console.log(tab, event)
-    },
-    getTradeCalender() {
-      fetchTradeCalender().then(response => {
-        tradeCalender = response.results
-        setTimeout(() => {
-        }, 1.5 * 1000)
-      })
     },
     getFilterOptions() {
       fetchFilterOptionList().then(response => {
@@ -606,9 +587,6 @@ export default {
       this.$nextTick(_ => {
         this.$refs.saveTagInput.$refs.input.focus()
       })
-    },
-    getAllCompaniesDone(data) {
-      this.calculateDisabled = false
     },
     getStrategyParam(id) {
       fetchStrategyParam(id).then(response => {

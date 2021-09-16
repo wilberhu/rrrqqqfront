@@ -203,15 +203,16 @@ export default {
         formatter: function(params) {
           const params_index = []
           if (params instanceof Array) {
-            for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
+            for (let i = 0; i < chartData.ts_code_list.length; i++) {
               for (let j = 0; j < params.length; j++) {
-                if (chartDataGlobal.ts_code_list[i] === params[j].seriesName) {
+                if (chartData.ts_code_list[i] === params[j].seriesName) {
                   params_index.push(j)
                 }
               }
             }
-            let ret = chartDataGlobal.time_line[params[0].dataIndex] + '<br>'
-            for (let i = 0; i < chartDataGlobal.ts_code_list.length; i++) {
+            let ret = chartData.time_line[params[0].dataIndex] + '<br>'
+            ret += '收益率：' + Math.round(params[params_index[0]].data * 10000 / chartData.close_data[0][0]) /100 + '%<br>'
+            for (let i = 0; i < chartData.ts_code_list.length; i++) {
               if (params[params_index[i]] && params[params_index[i]].data) {
                 ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName +
                   ' ' + chartData.name_list[chartData.ts_code_list.indexOf(params[params_index[i]].seriesName)] +

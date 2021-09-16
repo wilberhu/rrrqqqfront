@@ -189,7 +189,6 @@
 
 <script>
 import { fetchItem, createItem, updateItem } from '@/api/stockPicking'
-import { fetchAllList as fetchFilterOptionList } from '@/api/filterOption'
 import { fetchAllList as fetchStrategyList, fetchItemParam as fetchStrategyParam } from '@/api/strategy'
 import { Message } from 'element-ui'
 import CompositionDetail from '../../composition/components/CompositionDetail'
@@ -276,7 +275,7 @@ export default {
       },
       editFactorVisible: false,
       loading: false,
-      calculateDisabled: true,
+      calculateDisabled: false,
       filterMethod(query, item) {
         return item.label.indexOf(query) > -1
       },
@@ -334,26 +333,11 @@ export default {
       this.updateState()
     }
 
-    this.getFilterOptions()
-    this.getStrategyOptions()
-
     this.tempRoute = Object.assign({}, this.$route)
   },
   methods: {
     handleTabClick(tab, event) {
       // console.log(tab, event)
-    },
-    getFilterOptions() {
-      fetchFilterOptionList().then(response => {
-        this.filterOptions = response
-        for (const filterOption of this.filterOptions) {
-          filterOption['match'] = 'and'
-          filterOption['filterConditionListString'] = []
-          filterOption['filterConditionList'] = []
-        }
-        setTimeout(() => {
-        }, 1.5 * 1000)
-      })
     },
     getStrategyOptions() {
       fetchStrategyList().then(response => {

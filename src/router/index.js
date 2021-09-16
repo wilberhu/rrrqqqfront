@@ -186,12 +186,6 @@ export const constantRoutes = [
         meta: { title: 'create_strategy', icon: 'edit' }
       },
       {
-        path: 'filter_option_list',
-        component: () => import('@/views/strategy/FilterOptionList'),
-        name: 'FilterOptionList',
-        meta: { title: 'filter_option_list', icon: 'list' }
-      },
-      {
         path: 'edit/:id(\\d+)',
         component: () => import('@/views/strategy/edit'),
         name: 'EditStrategy',

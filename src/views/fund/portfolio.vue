@@ -1,14 +1,14 @@
 <template>
   <div class="tab-container">
     <div class="filter-container">
-      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" :disabled="listLoading" @click="handleDownload">
+      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" :disabled="PortfolioListLoading" @click="handleDownload">
         Export
       </el-button>
     </div>
     <el-tabs v-model="activeName" @tab-click="handleTabClick">
       <el-tab-pane :label="date" :name="date" v-for="(portfolio, date) in data" :key="date">
         <el-table
-          v-loading="listLoading"
+          v-loading="PortfolioListLoading"
           :ref="'portfolioTable'+date"
           :key="paging[date].tableKey"
           :data="tmpList"
@@ -71,7 +71,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <pagination v-show="paging[date].total>0" :total="paging[date].total" :page.sync="paging[date].page" :limit.sync="limit" @pagination="handleSizeChange(date)"/>
+        <pagination v-show="paging[date].total>0" :total="paging[date].total" :page.sync="paging[date].page" :limit.sync="limit" @pagination="handleTabChange(date)"/>
       </el-tab-pane>
     </el-tabs>
 
@@ -110,7 +110,7 @@ export default {
     return {
       activeName: '',
       data: {},
-      listLoading: true,
+      PortfolioListLoading: true,
       downloadLoading: false,
       limit: 40,
       paging: {},
@@ -139,17 +139,20 @@ export default {
       })
     },
     handleTabClick(tab, event) {
-      console.log(tab, event)
-      this.handleSizeChange(tab.name)
+      this.handleTabChange(tab.name)
     },
     getList() {
-      this.listLoading = true
+      this.PortfolioListLoading = true
+      // 留给页面渲染时间
+      setTimeout(() => {
+        this.PortfolioListLoading = false
+      }, 3 * 1000)
       fetchItemPortfolio(this.ts_code).then(response => {
         const dateList = Object.keys(response)
         this.data = Object.assign({}, response)
         this.activeName = dateList[dateList.length - 1]
 
-        this.listLoading = false
+        // this.PortfolioListLoading = false
         for (const date of dateList) {
           this.paging[date] = {
             total: this.data[date].count,
@@ -157,17 +160,12 @@ export default {
             tableKey: Number(date) * 100
           }
         }
-
-        this.handleSizeChange(this.activeName)
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+        this.handleTabChange(this.activeName)
       }).catch(
-        this.listLoading = false
+        // this.PortfolioListLoading = false
       )
     },
-    handleSizeChange(date) {
+    handleTabChange(date) {
       this.tmpList = this.data[date] ? this.data[date].results.slice((this.paging[date].page - 1) * this.limit, this.paging[date].page * this.limit) : []
     },
     handleSelectionChange(rows) {

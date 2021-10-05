@@ -257,7 +257,7 @@ export const constantRoutes = [
     children: [
       {
         name: 'Jupyter',
-        path: 'http://localhost:8020/',
+        path: 'https://jupyter.rquant.net/',
         // path: 'jupyter',
         // component: () => import('@/views/jupyter/index'),
         meta: { title: 'jupyter', icon: 'link', roles: ['admin'] }

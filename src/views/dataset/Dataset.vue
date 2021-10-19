@@ -8,7 +8,7 @@
         @click="delAll"
       >Remove select
       </el-button>
-      <el-input v-model="select_word" placeholder="key word (name, owner)" class="handle-input mr10"/>
+      <el-input v-model="select_word" placeholder="key word (name, owner)" class="handle-input mr10" />
       <el-button type="primary" icon="el-icon-search" @click="search">Search</el-button>
       <el-button
         type="primary"
@@ -25,7 +25,8 @@
       border
       class="table"
       @selection-change="handleSelectionChange"
-      @sort-change="sortChange">
+      @sort-change="sortChange"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column prop="id" label="id" sortable />
       <el-table-column prop="name" label="name" sortable />
@@ -49,7 +50,7 @@
           <el-button
             type="text"
             icon="el-icon-edit"
-            @click="handleEdit(scope.$index, scope.row)"
+            @click="handleImport(scope.$index, scope.row)"
           >edit
           </el-button>
           <el-button
@@ -63,41 +64,6 @@
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <!-- 编辑弹出框 -->
-    <el-dialog :visible.sync="editVisible" title="Edit" width="450px" center>
-      <el-form ref="updateForm" :model="updateForm">
-        <el-form-item label="Dataset Name" label-width="120px">
-          <el-input v-model="updateForm.name" style="width: 240px;" placeholder="required" />
-        </el-form-item>
-        <el-form-item>
-          <el-upload
-            ref="uploadEdit"
-            :http-request="editFileMethod"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :on-change="handleChangeEdit"
-            :file-list="fileListEdit"
-            :auto-upload="false"
-            :limit="2"
-            class="upload-demo"
-            style="width: 360px"
-            drag
-            name="file"
-            action="/api/datasets/"
-            accept=".csv">
-            <i class="el-icon-upload" />
-            <div class="el-upload__text">Drag your file here to begin or
-              <em>click to browse</em>
-            </div>
-            <div slot="tip" class="el-upload__tip">Please upload csv file</div>
-          </el-upload>
-          <span class="dialog-footer">
-            <el-button style="margin-top: 10px;" size="small" type="success" @click="submitUploadEdit">Submit</el-button>
-          </span>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
-
     <!-- 删除提示框 -->
     <el-dialog :visible.sync="delVisible" title="Warning" width="300px" center>
       <div class="del-dialog-cnt">Are you confirm to remove the data?</div>
@@ -108,10 +74,10 @@
     </el-dialog>
 
     <!-- 上传框 -->
-    <el-dialog :visible.sync="importVisible" title="Upload" width="450px" center>
-      <el-form ref="createForm" :model="createForm">
+    <el-dialog :visible.sync="updateVisible" :title="operation==='upload' ? 'Upload' : 'Edit'" width="450px" center>
+      <el-form ref="uploadForm" :model="uploadForm">
         <el-form-item label="Dataset Name" label-width="120px">
-          <el-input v-model="createForm.name" style="width: 240px;" placeholder="required"/>
+          <el-input v-model="uploadForm.name" readonly style="width: 240px;" placeholder="required" />
         </el-form-item>
         <el-form-item>
           <el-upload
@@ -127,7 +93,8 @@
             style="width: 360px"
             drag
             name="file"
-            action="/api/datasets/">
+            action="/api/datasets/"
+          >
             <i class="el-icon-upload" />
             <div class="el-upload__text">Drag your file here to begin or
               <em>click to browse</em>
@@ -159,9 +126,8 @@
         select_word: '',
         del_list: [],
         is_search: false,
-        editVisible: false,
         delVisible: false,
-        importVisible: false,
+        updateVisible: false,
 
         listLoading: true,
         page: 1,
@@ -170,18 +136,13 @@
           offset: undefined,
           sort: undefined
         },
-        createForm: {
+        uploadForm: {
+          id: undefined,
           name: '',
           file: undefined
         },
-        updateForm: {
-          id: '',
-          name: '',
-          file: ''
-        },
-        idx: -1,
         fileList: [],
-        fileListEdit: [],
+        operation: undefined
       }
     },
     computed: {
@@ -228,8 +189,25 @@
       visualize(id) {
         console.log('to do')
       },
-      handleImport() {
-        this.importVisible = true
+      handleImport(index, row) {
+        this.updateVisible = true
+        if (index !== undefined) {
+          this.operation = 'edit'
+          this.idx = index
+          const item = row
+          this.uploadForm = {
+            id: item.id,
+            name: item.name,
+            file: item.file
+          }
+        } else {
+          this.operation = 'upload'
+          this.uploadForm = {
+            id: undefined,
+            name: '',
+            file: undefined
+          }
+        }
       },
       handleDownload(index, row) {
         getDatasetHighlight(row.id).then(response => {
@@ -244,16 +222,6 @@
           setTimeout(() => {
           }, 1.5 * 1000)
         })
-      },
-      handleEdit(index, row) {
-        this.idx = index
-        const item = row
-        this.updateForm = {
-          id: item.id,
-          name: item.name,
-          file: item.file
-        }
-        this.editVisible = true
       },
       handleDelete(index, row) {
         this.idx = index
@@ -316,18 +284,10 @@
           this.$message.error('delete error')
         })
       },
-      handleChange(file)
-      {
+      handleChange(file) {
         this.fileList.splice(0,this.fileList.length)
-        this.createForm.name = file.name
+        this.uploadForm.name = file.name
         this.fileList.push(file)
-      },
-
-      handleChangeEdit(file)
-      {
-        this.fileListEdit.splice(0,this.fileListEdit.length)
-        this.updateForm.name = file.name
-        this.fileListEdit.push(file)
       },
       handleRemove(file, fileList) {
         console.log(file, fileList)
@@ -338,58 +298,56 @@
       submitUpload(param) {
         this.$refs.upload.submit()
       },
-      submitUploadEdit(param) {
-        this.$refs.uploadEdit.submit()
-      },
       uploadFileMethod(param) {
-        let fileObject = param.file
-        let formData = new FormData()
-        formData.append('name', this.createForm.name)
-        formData.append('file', fileObject)
-        uploadDataset(formData).then(response => {
-          setTimeout(() => {
-            this.listLoading = false
-          }, 1.5 * 1000)
-          if (response) {
-            this.$message({
-              showClose: true,
-              message: 'upload seccessfully',
-              type: 'success'
-            })
-          }
-          this.$refs.upload.clearFiles()
-          this.importVisible = false
-          this.createForm.name = ''
-          this.getList()
-        }).catch(message => {
-          console.log('message======================', message)
-          this.$message.error('upload error')
-        })
-      },
-      editFileMethod(param) {
-        let fileObject = param.file
-        let formData = new FormData()
-        formData.append('name', this.updateForm.name)
-        formData.append('file', fileObject)
-        editDataset(this.updateForm.id, formData).then(response => {
-          setTimeout(() => {
-            this.listLoading = false
-          }, 1.5 * 1000)
-          if (response) {
-            this.$message({
-              showClose: true,
-              message: 'upload seccessfully',
-              type: 'success'
-            })
-          }
-          this.$refs.uploadEdit.clearFiles()
-          this.editVisible = false
-          this.updateForm.name = ''
-          this.getList()
-        }).catch(message => {
-          console.log('message======================', message)
-          this.$message.error('upload error')
-        })
+        if (this.operation === 'upload') {
+          let fileObject = param.file
+          let formData = new FormData()
+          formData.append('name', this.uploadForm.name)
+          formData.append('file', fileObject)
+          uploadDataset(formData).then(response => {
+            setTimeout(() => {
+              this.listLoading = false
+            }, 1.5 * 1000)
+            if (response) {
+              this.$message({
+                showClose: true,
+                message: 'upload seccessfully',
+                type: 'success'
+              })
+            }
+            this.$refs.upload.clearFiles()
+            this.updateVisible = false
+            this.uploadForm.name = ''
+            this.getList()
+          }).catch(message => {
+            console.log('message======================', message)
+            this.$message.error('upload error')
+          })
+        } else if (this.operation === 'edit') {
+          let fileObject = param.file
+          let formData = new FormData()
+          formData.append('name', this.uploadForm.name)
+          formData.append('file', fileObject)
+          editDataset(this.uploadForm.id, formData).then(response => {
+            setTimeout(() => {
+              this.listLoading = false
+            }, 1.5 * 1000)
+            if (response) {
+              this.$message({
+                showClose: true,
+                message: 'upload seccessfully',
+                type: 'success'
+              })
+            }
+            this.$refs.upload.clearFiles()
+            this.updateVisible = false
+            this.uploadForm.name = ''
+            this.getList()
+          }).catch(message => {
+            console.log('message======================', message)
+            this.$message.error('upload error')
+          })
+        }
       },
       handleSearch() {
         this.page = 1

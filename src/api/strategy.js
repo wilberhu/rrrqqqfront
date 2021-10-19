@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import { getToken } from '@/utils/auth'
-import axios from 'axios'
 
 export function fetchList(query) {
   return request({
@@ -62,17 +60,7 @@ export function deleteItem(id) {
   })
 }
 
-export function fetchStrategyPortfolioDownload(path) {
-  return axios({
-    url: '/api/strategies/portfolio/' + path,
-    method: 'get',
-    headers: {
-      Authorization: 'Bearer ' + getToken()
-    }
-  })
-}
-
-export function fetchCombineData(data, column='close', params) {
+export function fetchCombineData(data, column = 'close', params) {
   return request({
     url: '/api/combine/' + column + '/',
     method: 'post',

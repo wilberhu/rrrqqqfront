@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import { getToken } from '@/utils/auth'
-import axios from 'axios'
 
 export function fetchList(query) {
   return request({

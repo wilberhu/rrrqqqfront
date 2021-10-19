@@ -3,23 +3,30 @@
     <el-form ref="compositionForm" label-position="left" label-width="80px" :model="compositionForm" style="padding: 0 20px;">
       <el-row :gutter="8">
         <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}">
-          <el-form-item label="组合名称" v-if="isEdit">
+          <el-button style="margin: 0 10px 10px 0;" type="primary" icon="el-icon-upload" @click="handleImportJson">
+            Import Json
+          </el-button>
+          <el-button style="margin: 0 10px 10px 0;" :loading="exportJsonLoading" type="primary" icon="el-icon-document" @click="handleExportJson">
+            Export Json
+          </el-button>
+          <el-form-item v-if="isEdit" label="组合名称">
             <el-tooltip class="item" :content="compositionForm.description" :disabled="!compositionForm.description" placement="bottom">
-              <span>{{compositionForm.name}}</span>
+              <span>{{ compositionForm.name }}</span>
             </el-tooltip>
           </el-form-item>
           <el-form-item label="资金总额">
-            <el-input type="number" v-model="compositionForm.allfund" placeholder="请输入内容" @change="updateState()"></el-input>
+            <el-input v-model="compositionForm.allfund" type="number" placeholder="请输入内容" @change="updateState()" />
           </el-form-item>
           <el-form-item label="手续费">
-            <el-input type="number" :step="0.0001" min="0" max="0.1" v-model="compositionForm.commission" placeholder="eg: 0.0005" @change="updateState()"></el-input>
+            <el-input v-model="compositionForm.commission" type="number" :step="0.0001" min="0" max="0.1" placeholder="eg: 0.0005" @change="updateState()" />
           </el-form-item>
-          <div style="height: 540px; overflow: auto; border:1px solid #cccccc; border-radius:10px; padding-top: 10px;" >
+          <div style="height: 540px; overflow: auto; border:1px solid #cccccc; border-radius:10px; padding-top: 10px;">
             <el-timeline :reverse="false">
               <el-timeline-item
                 v-for="(activity, activity_index) in compositionForm.activities"
                 :key="activity_index"
-                :timestamp="activity.timestamp">
+                :timestamp="activity.timestamp"
+              >
                 <div v-for="(company, company_index) in activity.holdings_cur.slice(0,2)" :key="company_index">
                   {{ company.name }}: {{ company.share }}
                 </div>
@@ -29,15 +36,15 @@
                 <span v-if="activity.freecash_cur < 0" style="color: red; margin-left: 5px;">
                   !
                 </span>
-                <div class="edit" @click="editTimestamp( activity_index )" >
+                <div class="edit" @click="editTimestamp( activity_index )">
                   <i class="el-icon-edit-outline" />
                 </div>
-                <div class="destroy" @click="destroyTimestamp( activity_index )" >
+                <div class="destroy" @click="destroyTimestamp( activity_index )">
                   <i class="el-icon-close" />
                 </div>
               </el-timeline-item>
             </el-timeline>
-            <div class="add" @click="addTimestamp()" >
+            <div class="add" @click="addTimestamp()">
               <i class="el-icon-circle-plus" />
             </div>
           </div>
@@ -54,20 +61,21 @@
           </el-row>
         </el-col>
       </el-row>
-      <el-row v-if="list.length>0">
-        <el-button :loading="downloadLoading" style="margin:0 0 20px 0" type="primary" icon="el-icon-document" :disabled="list.length===0" @click="handleDownload">
+      <el-row v-if="csvDataList.length>0">
+        <el-button style="margin: 0 10px 10px 0;" :loading="downloadLoading" type="primary" icon="el-icon-document" :disabled="csvDataList.length===0" @click="handleDownload">
           Export CSV
         </el-button>
         <el-table
-          v-loading="listLoading"
           ref="multipleTable"
           :key="tableKey"
-          :data="list"
+          v-loading="csvDataListLoading"
+          :data="csvDataList"
           border
           fit
           max-height="500"
-          highlight-current-row>
-          <el-table-column align="center" :prop="column" :label="column" v-for="(column, index) in list_columns" :key="index">
+          highlight-current-row
+        >
+          <el-table-column v-for="(column, index) in csvDataListColumns" :key="index" align="center" :prop="column" :label="column">
             <template slot-scope="scope">
               <span v-if="['cost', 'estimate'].indexOf(column) !== -1">{{ scope.row[column] | myParseFloat }}</span>
               <span v-else>{{ scope.row[column] }}</span>
@@ -86,8 +94,8 @@
           </el-col>
           <el-col :xs="{span: 20}" :sm="{span: 10}" :md="{span: 10}" :lg="{span: 10}" :xl="{span: 10}">
             <el-date-picker
-              :readonly="isTimestampEdit?'readonly':false"
               v-model="activityForm.timestamp_temp"
+              :readonly="isTimestampEdit?'readonly':false"
               :editable="false"
               format="yyyyMMdd"
               value-format="yyyyMMdd"
@@ -95,8 +103,7 @@
               placeholder="选择日期"
               style="width: 100%"
               @change="timestampOnChange($event)"
-            >
-            </el-date-picker>
+            />
           </el-col>
         </el-row>
         <hr>
@@ -110,38 +117,38 @@
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">份额</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">成本价</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">成本</el-col>
-              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">收盘价</el-col>
-              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">市值</el-col>
+              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">上期收盘价</el-col>
+              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">上期市值</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
-            <el-row style="text-align: center;" v-for="(company, company_index) in activityForm.holdings_pre" :key="company_index">
+            <el-row v-for="(company, company_index) in activityForm.holdings_pre" :key="company_index" style="text-align: center;">
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].ts_code + activityForm.holdings_pre[company_index].name }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].share }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].cost / activityForm.holdings_pre[company_index].share | myParseFloat }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].cost | myParseFloat }}</el-col>
-              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].estimate / activityForm.holdings_pre[company_index].share | myParseFloat }}</el-col>
-              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].estimate | myParseFloat }}</el-col>
+              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].close | myParseFloat }}</el-col>
+              <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_pre[company_index].share * activityForm.holdings_pre[company_index].close | myParseFloat }}</el-col>
             </el-row>
-            <el-row style="text-align: center;" v-if="activityForm.holdings_pre.length===0">
+            <el-row v-if="activityForm.holdings_pre.length===0" style="text-align: center;">
               <el-col :span="24">Empty</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">总持仓</el-col>
-              <el-col :span="8"></el-col>
+              <el-col :span="8" />
               <el-col :span="8">{{ activityForm.holdings_pre.reduce((total, item) => total + (item.estimate || item.cost), 0) | myParseFloat }}</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">可用资金</el-col>
-              <el-col :span="8"></el-col>
+              <el-col :span="8" />
               <el-col :span="8">{{ activityForm.freecash_pre | myParseFloat }}</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">总市值</el-col>
-              <el-col :span="8"></el-col>
-              <el-col :span="8">{{ activityForm.holdings_pre.reduce((total, item) => total +  (item.estimate || item.cost), 0) + activityForm.freecash_pre | myParseFloat }}</el-col>
+              <el-col :span="8" />
+              <el-col :span="8">{{ activityForm.holdings_pre.reduce((total, item) => total + (item.estimate || item.cost), 0) + activityForm.freecash_pre | myParseFloat }}</el-col>
             </el-row>
           </el-col>
         </el-row>
@@ -180,14 +187,14 @@
                 <el-row style="padding: 0; text-align: center; flex-wrap: wrap;" align="middle" type="flex" :gutter="6">
                   <el-col :xs="{span: 12}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
                     <el-switch
-                      style="display: inline-block"
                       v-model="activityForm.companyOps[company_index].operation"
+                      style="display: inline-block"
                       inactive-color="#13ce66"
                       active-value="buy"
                       inactive-value="sell"
-                      @change="computeActivityCur(activityForm)">
-                    </el-switch>
-                    <span>{{activityForm.companyOps[company_index].operation}}</span>
+                      @change="computeActivityCur(activityForm)"
+                    />
+                    <span>{{ activityForm.companyOps[company_index].operation }}</span>
                   </el-col>
                   <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
                     <el-autocomplete
@@ -205,16 +212,17 @@
                   </el-col>
                   <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
                     <el-input
+                      v-model="activityForm.companyOps[company_index].share"
                       type="number"
                       step="100"
                       :disabled="!activityForm.companyOps[company_index].ts_code"
                       placeholder="股数"
                       clearable
-                      v-model="activityForm.companyOps[company_index].share"
-                      @input="computeActivityCur(activityForm)">
+                      @input="computeActivityCur(activityForm)"
+                    >
 
                       <template slot="suffix">{{ activityForm.companyOps[company_index].share * activityForm.companyOps[company_index].price * 100 /
-                      (activityForm.holdings_pre.reduce((total, item) => total + item.cost, 0) + activityForm.freecash_pre) | myParseFloat }}%</template>
+                        (activityForm.holdings_pre.reduce((total, item) => total + item.cost, 0) + activityForm.freecash_pre) | myParseFloat }}%</template>
                     </el-input>
                   </el-col>
                   <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
@@ -222,21 +230,23 @@
                       placement="top-start"
                       :title="activityForm.companyOps[company_index].ts_code + '' + activityForm.companyOps[company_index].name"
                       trigger="hover"
-                      :disabled="!activityForm.companyOps[company_index].ts_code">
-                      <template class="tips-content"  v-if="activityForm.companyOps[company_index].info">
+                      :disabled="!activityForm.companyOps[company_index].ts_code"
+                    >
+                      <template v-if="activityForm.companyOps[company_index].info" class="tips-content">
                         <el-form label-position="left" label-width="60px">
-                          <el-form-item style="margin: 0;" :label="key" v-for="(value, key) in activityForm.companyOps[company_index].info" :key="key">{{ value }}</el-form-item>
+                          <el-form-item v-for="(value, key) in activityForm.companyOps[company_index].info" :key="key" style="margin: 0;" :label="key">{{ value }}</el-form-item>
                         </el-form>
                       </template>
                       <el-input
+                        slot="reference"
+                        v-model="activityForm.companyOps[company_index].price"
                         type="number"
                         step="0.01"
                         :disabled="!activityForm.companyOps[company_index].ts_code"
-                        slot="reference"
                         clearable
                         placeholder="股价"
-                        v-model="activityForm.companyOps[company_index].price"
-                        @input="computeActivityCur(activityForm)"/>
+                        @input="computeActivityCur(activityForm)"
+                      />
                     </el-popover>
                   </el-col>
                   <el-col :xs="{span: 12}" :sm="{span: 6}" :md="{span: 2}" :lg="{span: 2}" :xl="{span: 2}">
@@ -244,8 +254,8 @@
                   </el-col>
                   <el-col :xs="{span: 12}" :sm="{span: 6}" :md="{span: 2}" :lg="{span: 2}" :xl="{span: 2}">
                     {{ activityForm.companyOps.slice(0, company_index + 1).reduce((total, item) => total +
-                    (item.operation === 'buy' ? -1 : 1) * Number(item.share || 0) * Number(item.price || 0),
-                    activityForm.freecash_pre) | myParseFloat }}
+                                                                                    (item.operation === 'buy' ? -1 : 1) * Number(item.share || 0) * Number(item.price || 0),
+                                                                                  activityForm.freecash_pre) | myParseFloat }}
                   </el-col>
                   <el-col :xs="{span: 12}" :sm="{span: 6}" :md="{span: 2}" :lg="{span: 2}" :xl="{span: 2}">
                     <svg-icon class="drag-handler" icon-class="drag" />
@@ -282,7 +292,7 @@
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">市值</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
-            <el-row style="text-align: center;" v-for="(company, company_index) in activityForm.holdings_cur" :key="company_index">
+            <el-row v-for="(company, company_index) in activityForm.holdings_cur" :key="company_index" style="text-align: center;">
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ company.ts_code + company.name }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ company.share }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ company.cost / company.share | myParseFloat }}</el-col>
@@ -290,25 +300,25 @@
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_cur[company_index].close | myParseFloat }}</el-col>
               <el-col :xs="{span: 8}" :sm="{span: 8}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">{{ activityForm.holdings_cur[company_index].share * activityForm.holdings_cur[company_index].close | myParseFloat }}</el-col>
             </el-row>
-            <el-row style="text-align: center;" v-if="activityForm.holdings_cur.length===0">
+            <el-row v-if="activityForm.holdings_cur.length===0" style="text-align: center;">
               <el-col :span="24">Empty</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">总持仓</el-col>
-              <el-col :span="8"></el-col>
+              <el-col :span="8" />
               <el-col :span="8">{{ activityForm.holdings_cur.reduce((total, item) => total + ((item.share * item.close) || item.cost), 0) | myParseFloat }}</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">可用资金</el-col>
-              <el-col :span="8"></el-col>
+              <el-col :span="8" />
               <el-col :span="8">{{ activityForm.freecash_cur | myParseFloat }}</el-col>
             </el-row>
             <hr style="border:1px dashed #cccccc">
             <el-row style="text-align: center;">
               <el-col :span="8">总市值</el-col>
-              <el-col :span="8"></el-col>
+              <el-col :span="8" />
               <el-col :span="8">{{ activityForm.holdings_cur.reduce((total, item) => total + ((item.share * item.close) || item.cost), 0) + activityForm.freecash_cur | myParseFloat }}</el-col>
             </el-row>
           </el-col>
@@ -345,12 +355,45 @@
         </el-form-item>
       </el-form>
     </el-dialog>
+
+    <!-- 上传框 -->
+    <el-dialog :visible.sync="importJsonVisible" title="Upload" width="450px" center>
+      <el-form ref="uploadForm" :model="uploadForm">
+        <el-form-item>
+          <el-upload
+            ref="upload"
+            :http-request="uploadFileMethod"
+            :on-preview="handlePreview"
+            :on-remove="handleRemove"
+            :on-change="handleChange"
+            :file-list="fileList"
+            :auto-upload="false"
+            :limit="2"
+            class="upload-demo"
+            style="width: 360px"
+            drag
+            name="file"
+            accept=".json"
+            action="/api/datasets/"
+          >
+            <i class="el-icon-upload" />
+            <div class="el-upload__text">Drag your file here to begin or
+              <em>click to browse</em>
+            </div>
+            <div slot="tip" class="el-upload__tip">Please upload Json file</div>
+          </el-upload>
+          <span class="dialog-footer">
+            <el-button style="margin-top: 10px;" size="small" type="success" @click="submitUpload">Submit</el-button>
+          </span>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { queryCompanies } from '@/api/stockBasic'
-import { calculateComposition, fetchItem, createItem, updateItem } from '@/api/composition'
+import { calculateComposition, getCompositionInfo, fetchItem, createItem, updateItem } from '@/api/composition'
 import { getCompanyHistData } from '@/api/histData'
 import StackLineChart from './StackLineChart'
 import draggable from 'vuedraggable'
@@ -452,6 +495,7 @@ export default {
         commission: 0.0001,
         activities: []
       },
+      jsonDict: {},
       activityForm: {
         companyOps: [],
         timestamp_temp: undefined,
@@ -471,9 +515,11 @@ export default {
         name_list: [],
         close_data: []
       },
-      list: [],
-      list_columns: [],
+      csvDataList: [],
+      csvDataListColumns: [],
       listLoading: false,
+      importJsonVisible: false,
+      exportJsonLoading: false,
       downloadLoading: false,
       editVisible: false,
       isTimestampEdit: false,
@@ -485,15 +531,47 @@ export default {
           { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
         ]
       },
-      tempRoute: {}
+      tempRoute: {},
+
+      uploadForm: {
+        id: undefined,
+        name: '',
+        file: undefined
+      },
+      fileList: []
     }
   },
   async created() {
     if (this.isEdit) {
       this.compositionForm.id = this.$route.params && this.$route.params.id
-      this.compositionForm = Object.assign({}, await this.fetchData(this.compositionForm.id))
+      this.jsonDict = Object.assign({}, await this.fetchData(this.compositionForm.id))
+
+      var msg = this.$message({
+        duration: 0,
+        showClose: false,
+        message: 'Parse json'
+      })
+      getCompositionInfo(this.jsonDict).then(response => {
+        this.compositionForm = response
+      }).then(() => {
+        msg.close()
+        this.updateActivities()
+        this.updateState()
+        this.importJsonVisible = false
+      }).catch(
+        error => {
+          msg.close()
+          msg = this.$message({
+            showClose: true,
+            message: error,
+            type: 'Error'
+          })
+        }
+      )
+    } else {
+      this.updateActivities()
+      this.updateState()
     }
-    this.updateState()
 
     // Why need to make a copy of this.$route here?
     // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
@@ -526,7 +604,7 @@ export default {
       this.isTimestampEdit = false
     },
     editTimestamp(index) {
-      this.activityForm = Object.assign({}, this.compositionForm.activities[index])
+      this.activityForm = deepCopy(this.compositionForm.activities[index])
       this.editVisible = true
       this.isTimestampEdit = true
     },
@@ -574,6 +652,7 @@ export default {
         }
       }
       this.editVisible = false
+      this.updateActivities(0, true)
       this.updateState()
     },
     destroyTimestamp(index) {
@@ -583,7 +662,7 @@ export default {
     confirmDestroyTimestamp() {
       this.compositionForm.activities.splice(this.deleteTimestampForm.index, 1)
       this.delVisible = false
-
+      this.updateActivities()
       this.updateState()
     },
     addCompany(item) {
@@ -677,9 +756,7 @@ export default {
             message: '已更改日期'
           })
           this.activityForm.companyOps = []
-          this.activityForm.timestamp = this.activityForm.timestamp_temp
-          this.activityForm = this.computeActivityPre(this.activityForm)
-          this.activityForm = this.computeActivityCur(this.activityForm)
+          this.updateActivities(0, true)
         }).catch(() => {
           this.$message({
             type: 'info',
@@ -688,9 +765,7 @@ export default {
           this.activityForm.timestamp_temp = this.activityForm.timestamp
         })
       } else {
-        this.activityForm.timestamp = this.activityForm.timestamp_temp
-        this.activityForm = this.computeActivityPre(this.activityForm)
-        this.activityForm = this.computeActivityCur(this.activityForm)
+        this.updateActivities(0, true)
       }
     },
     getCompanyIndexByTsCode(companies, ts_code) {
@@ -700,20 +775,6 @@ export default {
         }
       }
       return -1
-    },
-    computeActivityPre(activityForm) {
-      var activityFormPre = this.getPreviousActivity(activityForm.timestamp)
-      activityForm.holdings_pre = deepCopy(activityFormPre.holdings_cur)
-      for (let i = 0; i < activityForm.holdings_pre.length; i++) {
-        var index_ts_code = this.lineChartData.ts_code_list.indexOf(activityForm.holdings_pre[i].ts_code)
-        var index_timestamp = this.lineChartData.time_line.indexOf(activityForm.timestamp)
-        if (index_ts_code !== -1) {
-          activityForm.holdings_pre[i].estimate = this.lineChartData.close_data[index_ts_code][index_timestamp]
-          activityForm.holdings_pre[i].close = activityForm.holdings_pre[i].estimate / activityForm.holdings_pre[i].share
-        }
-      }
-      activityForm.freecash_pre = activityFormPre.freecash_cur
-      return deepCopy(activityForm)
     },
     computeActivityCur(activityForm) {
       var freecash_cur = activityForm.freecash_pre
@@ -739,70 +800,53 @@ export default {
         freecash_cur += operationSign * Number(companyOp.share || 0) * Number(companyOp.price || 0)
       }
       for (let i = 0; i < holdings_cur.length; i++) {
+        var index_Op = this.getCompanyIndexByTsCode(activityForm.companyOps, holdings_cur[i].ts_code)
         var index_pre = this.getCompanyIndexByTsCode(activityForm.holdings_pre, holdings_cur[i].ts_code)
-        var index_Ops = this.getCompanyIndexByTsCode(activityForm.companyOps, holdings_cur[i].ts_code)
-        if (index_pre !== -1) {
-          holdings_cur[i].close = activityForm.holdings_pre[index_pre].estimate / activityForm.holdings_pre[index_pre].share
-        } else if (activityForm.companyOps[index_Ops].info) {
-          holdings_cur[i].close = activityForm.companyOps[index_Ops].info.close
-        } else {
-          holdings_cur[i].close = undefined
-        }
+        holdings_cur[i].close = index_Op !== -1 && activityForm.companyOps[index_Op].info ? activityForm.companyOps[index_Op].info.close
+          : index_pre !== -1 ? activityForm.holdings_pre[index_pre].close : 0
         holdings_cur[i].estimate = holdings_cur[i].close * holdings_cur[i].share
       }
       activityForm.holdings_cur = holdings_cur
       activityForm.freecash_cur = freecash_cur
       return deepCopy(activityForm)
     },
-    getPreviousActivity(timestamp) {
-      if (this.compositionForm.activities.length === 0 || timestamp <= this.compositionForm.activities[0].timestamp) {
-        return {
-          companyOps: [],
-          timestamp: undefined,
-          timestamp_temp: undefined,
-          freecash_pre: Number(this.compositionForm.allfund),
-          freecash_cur: Number(this.compositionForm.allfund),
-          holdings_pre: [],
-          holdings_cur: []
-        }
-      }
-      for (let i = this.compositionForm.activities.length - 1; i >= 0; i--) {
-        if (timestamp > this.compositionForm.activities[i].timestamp) {
-          return this.compositionForm.activities[i]
-        }
-      }
-    },
-    updateActivities(flag = 0) {
+    updateActivities(flag = 0, refreshCurrent = false) {
       for (let i = flag; i < this.compositionForm.activities.length; i++) {
-        var activityForm = deepCopy(this.compositionForm.activities[i])
-        if (i === 0) {
-          activityForm.freecash_pre = this.compositionForm.allfund
-          activityForm.freecash_cur = this.compositionForm.allfund
+        for (let j = 0; j < this.compositionForm.activities[i].companyOps.length; j++) {
+          this.compositionForm.activities[i].companyOps[j].ts_code_temp = this.compositionForm.activities[i].companyOps[j].ts_code
         }
-        activityForm = this.computeActivityPre(activityForm)
-        activityForm = this.computeActivityCur(activityForm)
-        this.compositionForm.activities[i] = activityForm
+        if (i === 0) {
+          this.compositionForm.activities[i].freecash_pre = this.compositionForm.allfund
+          this.compositionForm.activities[i].holdings_pre = []
+        } else {
+          this.compositionForm.activities[i].freecash_pre = this.compositionForm.activities[i - 1].freecash_cur
+          this.compositionForm.activities[i].holdings_pre = this.compositionForm.activities[i - 1].holdings_cur
+        }
+        this.compositionForm.activities[i].timestamp_temp = this.compositionForm.activities[i].timestamp
+        if (refreshCurrent) {
+          this.compositionForm.activities[i] = this.computeActivityCur(this.compositionForm.activities[i])
+        }
       }
     },
     updateDataFrame() {
-      this.listLoading = true
-      this.list = []
-      this.list_columns = ['trade_date', 'ts_code', 'name', 'operation', 'share', 'price', 'cost', 'close', 'estimate']
+      this.csvDataListLoading = true
+      this.csvDataList = []
+      this.csvDataListColumns = ['trade_date', 'ts_code', 'name', 'operation', 'share', 'price', 'cost', 'close', 'estimate']
       for (var activity of this.compositionForm.activities) {
-        this.list.push({
+        this.csvDataList.push({
           trade_date: activity.timestamp,
           name: '总市值',
           cost: activity.holdings_cur.reduce((total, item) => total + item.cost, activity.freecash_cur),
-          estimate: activity.holdings_cur.reduce((total, item) => total + item.estimate, activity.freecash_cur)
+          estimate: activity.holdings_cur.reduce((total, item) => total + item.share * item.close, activity.freecash_cur)
         })
-        this.list.push({
+        this.csvDataList.push({
           trade_date: activity.timestamp,
           name: '可用资金',
           cost: activity.freecash_cur,
           estimate: activity.freecash_cur
         })
         for (var companyOp of activity.companyOps) {
-          this.list.push({
+          this.csvDataList.push({
             trade_date: activity.timestamp,
             ts_code: companyOp.ts_code,
             name: companyOp.name,
@@ -815,10 +859,9 @@ export default {
           })
         }
       }
-      this.listLoading = false
+      this.csvDataListLoading = false
     },
     updateState() {
-      this.updateActivities()
       this.updateDataFrame()
       var msg = this.$message({
         duration: 0,
@@ -828,18 +871,16 @@ export default {
       calculateComposition(this.compositionForm).then(response => {
         this.lineChartData = Object.assign({}, response)
         msg.close()
-      }).then(() => {
-        this.updateActivities()
       }).catch(
-          error => {
-            msg.close()
-            msg = this.$message({
-              showClose: true,
-              message: error,
-              type: 'Error'
-            })
-          }
-        )
+        error => {
+          msg.close()
+          msg = this.$message({
+            showClose: true,
+            message: error,
+            type: 'Error'
+          })
+        }
+      )
     },
     setTagsViewTitle() {
       const route = Object.assign({}, this.tempRoute, { title: this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Strategy'}` })
@@ -852,10 +893,9 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           if (this.isEdit) {
-            updateItem(this.compositionForm.id, this.compositionForm)
+            updateItem(this.compositionForm.id, this.compositionFormSimple(this.compositionForm))
               .then(
                 response => {
-                  this.compositionForm = Object.assign({}, response)
                   this.$message({
                     message: 'Successful saved composition',
                     type: 'Success'
@@ -873,17 +913,16 @@ export default {
                 }
               )
           } else {
-            createItem(this.compositionForm)
+            createItem(this.compositionFormSimple(this.compositionForm))
               .then(
                 response => {
-                  this.compositionForm = Object.assign({}, response)
                   this.$message({
                     message: 'Successful saved composition',
                     type: 'Success'
                   })
                   this.saveCompositionVisible = false
                   this.$router.push({
-                    path: '/composition/edit/' + this.compositionForm.id
+                    path: '/composition/edit/' + response.id
                   })
                 }
               )
@@ -900,12 +939,102 @@ export default {
         }
       })
     },
+    handleChange(file) {
+      this.fileList.splice(0, this.fileList.length)
+      this.uploadForm.name = file.name
+      this.fileList.push(file)
+    },
+    handleRemove(file, fileList) {
+      console.log(file, fileList)
+    },
+    handlePreview(file) {
+      console.log(file)
+    },
+    submitUpload(param) {
+      this.$refs.upload.submit()
+    },
+    handleImportJson() {
+      this.importJsonVisible = true
+    },
+    async uploadFileMethod(param) {
+      this.jsonDict = await this.getDictFromFile(param.file)
+      this.jsonDict.name = this.compositionForm.name
+
+      var msg = this.$message({
+        duration: 0,
+        showClose: false,
+        message: 'Parse json'
+      })
+      getCompositionInfo(this.jsonDict).then(response => {
+        this.compositionForm = deepCopy(response)
+      }).then(() => {
+        msg.close()
+        this.updateActivities()
+        this.updateState()
+        this.importJsonVisible = false
+      }).catch(
+        error => {
+          msg.close()
+          msg = this.$message({
+            showClose: true,
+            message: error,
+            type: 'Error'
+          })
+        }
+      )
+    },
+    compositionFormSimple() {
+      var activities = []
+      for (var i = 0; i < this.compositionForm.activities.length; i++) {
+        var companyOps = []
+        for (var companyOp of this.compositionForm.activities[i].companyOps) {
+          companyOps.push({
+            operation: companyOp.operation,
+            ts_code: companyOp.ts_code,
+            share: companyOp.share,
+            price: companyOp.price
+          })
+        }
+        activities.push({
+          companyOps: companyOps,
+          timestamp: this.compositionForm.activities[i].timestamp,
+          freecash_cur: this.compositionForm.activities[i].freecash_cur
+        })
+      }
+      return {
+        id: this.compositionForm.id,
+        name: this.compositionForm.name,
+        description: this.compositionForm.description,
+
+        allfund: this.compositionForm.allfund,
+        commission: this.compositionForm.commission,
+        activities: activities
+      }
+    },
+    async getDictFromFile(jsonFile) {
+      return new Promise((resolve, reject) => {
+        var reader = new FileReader()
+        reader.readAsText(jsonFile, 'utf-8')
+        reader.onload = function() {
+          resolve(JSON.parse(this.result))
+        }
+      })
+    },
+    handleExportJson() {
+      const fileURL = window.URL.createObjectURL(new Blob([JSON.stringify(this.compositionFormSimple(), null, 4)]))
+      const fileLink = document.createElement('a')
+      fileLink.href = fileURL
+      fileLink.setAttribute('download', this.compositionForm.name + '.json')
+      document.body.appendChild(fileLink)
+      fileLink.click()
+      document.body.removeChild(fileLink)
+    },
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = this.list_columns
-        const filterVal = this.list_columns
-        const data = this.formatJson(filterVal, this.list)
+        const tHeader = this.csvDataListColumns
+        const filterVal = this.csvDataListColumns
+        const data = this.formatJson(filterVal, this.csvDataList)
         excel.export_json_to_excel({
           header: tHeader,
           data,

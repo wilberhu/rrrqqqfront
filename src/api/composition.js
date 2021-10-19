@@ -8,10 +8,9 @@ export function calculateComposition(data) {
   })
 }
 
-
-export function calculateActivity(data) {
+export function getCompositionInfo(data) {
   return request({
-    url: '/api/compositions/activity/',
+    url: '/api/compositions/info/',
     method: 'post',
     data
   })

@@ -222,7 +222,7 @@
                     >
 
                       <template slot="suffix">{{ activityForm.companyOps[company_index].share * activityForm.companyOps[company_index].price * 100 /
-                        (activityForm.holdings_pre.reduce((total, item) => total + item.cost, 0) + activityForm.freecash_pre) | myParseFloat }}%</template>
+                        (activityForm.holdings_pre.reduce((total, item) => total + item.cost, activityForm.freecash_pre)) | myParseFloat }}%</template>
                     </el-input>
                   </el-col>
                   <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
@@ -627,8 +627,7 @@ export default {
       this.activityForm = this.computeActivityCur(this.activityForm)
 
       var flag = -1
-      if (this.isTimestampEdit) {
-        // edit an activity
+      if (this.isTimestampEdit) { // edit an activity
         for (let i = 0; i < this.compositionForm.activities.length; i++) {
           if (this.activityForm.timestamp === this.compositionForm.activities[i].timestamp) {
             this.compositionForm.activities.splice(i, 1, Object.assign({}, this.activityForm))
@@ -636,7 +635,7 @@ export default {
             break
           }
         }
-      } else {
+      } else { // add an activity
         for (let i = 0; i < this.compositionForm.activities.length; i++) {
           if (this.activityForm.timestamp < this.compositionForm.activities[i].timestamp) {
             // add an activity between the list
@@ -756,7 +755,6 @@ export default {
             message: '已更改日期'
           })
           this.activityForm.companyOps = []
-          this.updateActivities(0, true)
         }).catch(() => {
           this.$message({
             type: 'info',
@@ -764,8 +762,23 @@ export default {
           })
           this.activityForm.timestamp_temp = this.activityForm.timestamp
         })
-      } else {
-        this.updateActivities(0, true)
+      }
+      this.activityForm.timestamp = this.activityForm.timestamp_temp
+      if (!this.isTimestampEdit) {
+        var activity_index = this.compositionForm.activities.length
+        for (let i = 0; i < this.compositionForm.activities.length; i++) {
+          if (this.activityForm.timestamp < this.compositionForm.activities[i].timestamp) {
+            activity_index = i
+            break
+          }
+        }
+        if (activity_index === 0) {
+          this.activityForm.holdings_pre = []
+          this.activityForm.freecash_pre = this.compositionForm.allfund
+        } else {
+          this.activityForm.holdings_pre = deepCopy(this.compositionForm.activities[activity_index - 1].holdings_cur)
+          this.activityForm.freecash_pre = deepCopy(this.compositionForm.activities[activity_index - 1].freecash_cur)
+        }
       }
     },
     getCompanyIndexByTsCode(companies, ts_code) {
@@ -972,6 +985,8 @@ export default {
         this.updateActivities()
         this.updateState()
         this.importJsonVisible = false
+        this.$refs.upload.clearFiles()
+        this.fileList = []
       }).catch(
         error => {
           msg.close()

@@ -193,25 +193,6 @@ export const constantRoutes = [
         hidden: true
       },
       {
-        path: 'stock_picking_list',
-        component: () => import('@/views/strategy/StockPickingList'),
-        name: 'StockPickingList',
-        meta: { title: 'stock_picking_list', icon: 'list' }
-      },
-      {
-        path: 'create_stock_picking',
-        component: () => import('@/views/strategy/CreateStockPicking'),
-        name: 'CreateStockPicking',
-        meta: { title: 'create_stock_picking', icon: 'edit' }
-      },
-      {
-        path: 'edit_stock_picking/:id(\\d+)',
-        component: () => import('@/views/strategy/EditStockPicking'),
-        name: 'EditStockPicking',
-        meta: { title: 'edit_stock_picking' },
-        hidden: true
-      },
-      {
         path: 'select_list',
         component: () => import('@/views/strategy/select_list/stock'),
         name: 'SelectList',
@@ -256,10 +237,8 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        name: 'Jupyter',
         path: 'https://jupyter.rquant.net/',
-        // path: 'jupyter',
-        // component: () => import('@/views/jupyter/index'),
+        name: 'Jupyter',
         meta: { title: 'jupyter', icon: 'link', roles: ['admin'] }
       }
     ]

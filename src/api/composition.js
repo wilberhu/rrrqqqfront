@@ -53,10 +53,3 @@ export function deleteItem(id) {
     method: 'delete'
   })
 }
-
-export function fetchTradeCalender() {
-  return request({
-    url: '/api/trade_calender/',
-    method: 'get'
-  })
-}

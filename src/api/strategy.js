@@ -30,13 +30,6 @@ export function fetchItemCode(id) {
   })
 }
 
-export function fetchItemParam(id) {
-  return request({
-    url: '/api/strategies/' + id + '/param/',
-    method: 'get'
-  })
-}
-
 export function createItem(data) {
   return request({
     url: '/api/strategies/',

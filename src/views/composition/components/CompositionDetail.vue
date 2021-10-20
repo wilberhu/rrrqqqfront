@@ -896,11 +896,11 @@ export default {
       )
     },
     setTagsViewTitle() {
-      const route = Object.assign({}, this.tempRoute, { title: this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Strategy'}` })
+      const route = Object.assign({}, this.tempRoute, { title: this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Composition'}` })
       this.$store.dispatch('tagsView/updateVisitedView', route)
     },
     setPageTitle() {
-      document.title = this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Strategy'}`
+      document.title = this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Composition'}`
     },
     saveComposition(formName) {
       this.$refs[formName].validate((valid) => {
@@ -972,6 +972,7 @@ export default {
     async uploadFileMethod(param) {
       this.jsonDict = await this.getDictFromFile(param.file)
       this.jsonDict.name = this.compositionForm.name
+      var composition_id_temp = this.compositionForm.id
 
       var msg = this.$message({
         duration: 0,
@@ -980,6 +981,7 @@ export default {
       })
       getCompositionInfo(this.jsonDict).then(response => {
         this.compositionForm = deepCopy(response)
+        this.compositionForm.id = composition_id_temp
       }).then(() => {
         msg.close()
         this.updateActivities()

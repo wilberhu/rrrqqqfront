@@ -120,6 +120,7 @@ export default {
           // data: chartData.ts_code_list,
           left: 10,
           top: 25,
+          selectedMode: chartData.ts_code_list.length > 20 ? 'single' : 'multiple',
           formatter: function(ts_code) {
             return ts_code + ' ' + chartData.name_list[chartData.ts_code_list.indexOf(ts_code)]
           }
@@ -211,7 +212,7 @@ export default {
               }
             }
             let ret = chartData.time_line[params[0].dataIndex] + '<br>'
-            ret += '收益率：' + Math.round(params[params_index[0]].data * 10000 / chartData.close_data[0][0]) /100 + '%<br>'
+            ret += '收益率：' + Math.round(params[params_index[0]].data * 10000 / chartData.close_data[0][0]) / 100 + '%<br>'
             for (let i = 0; i < chartData.ts_code_list.length; i++) {
               if (params[params_index[i]] && params[params_index[i]].data) {
                 ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName +

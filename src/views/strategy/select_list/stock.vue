@@ -28,7 +28,7 @@
       <div slot="title" class="header-title">
         <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCombineFullscreen(!combineFullscreen)"></i>
       </div>
-      <el-form label-width="100px">
+      <el-form label-width="60px">
         <el-form-item label="funds: " v-if="activeName==='fund'">
           <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
         </el-form-item>
@@ -44,15 +44,16 @@
             type="date"
             :clearable="false"
             :editable="false"
+            style="width: 100%; max-width: 240px; margin: 5px;"
             aria-required="true"
             placeholder="选择日期"
             @blur="refreshChart()"
           >
           </el-date-picker>
-          <el-input type="number" readonly placeholder="value" v-model="compositionForm.allfund" style="margin: 0 10px 10px 0; width: 240px;">
+          <el-input type="number" readonly placeholder="value" v-model="compositionForm.allfund" style="width: 100%; max-width: 240px; margin: 5px;">
             <template slot="prepend">资金总额</template>
           </el-input>
-          <el-input type="number" readonly placeholder="value" v-model="compositionForm.commission" style="margin: 0 10px 10px 0; width: 240px;">
+          <el-input type="number" readonly placeholder="value" v-model="compositionForm.commission" style="width: 100%; max-width: 240px; margin: 5px;">
             <template slot="prepend">手续费</template>
           </el-input>
         </el-form-item>

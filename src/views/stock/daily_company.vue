@@ -211,15 +211,10 @@ export default {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
       })
     },
     querySearchAsync(queryString, cb) {
-      queryCompanies({q: queryString}).then(response => {
+      queryCompanies({ q: queryString }).then(response => {
         var list = []
         for (const item of response.results) {
           list.push({
@@ -244,7 +239,7 @@ export default {
       this.getList()
     },
     handleInput(event) {
-      if(event==='') {
+      if (event === '') {
         this.handleClear()
       }
     },

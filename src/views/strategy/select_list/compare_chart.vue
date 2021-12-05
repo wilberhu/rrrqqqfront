@@ -1,5 +1,5 @@
 <template>
-  <div :class="className" :id="id" :style="{height:height,width:width}"/>
+  <div :id="id" :class="className" :style="{height:height,width:width}" />
 </template>
 
 <script>
@@ -81,6 +81,21 @@ export default {
       this.chartData = Object.assign({}, form)
       this.chartDataNorm = Object.assign({}, this.chartData)
 
+      this.onDataZoom()
+
+      this.setOptions(this.chartDataNorm, this.benchmarkNorm)
+    },
+    initChart: function() {
+      this.start_index = 0
+      this.chart = echarts.init(this.$el, 'macarons')
+
+      var _this = this
+      this.chart.on('dataZoom', function(params) {
+        _this.start_index = Number(_this.chart.getModel().option.xAxis[0].rangeStart)
+        _this.onDataZoom()
+      })
+    },
+    onDataZoom() {
       if (this.chartData.close_data != null) {
         for (let i = 0; i < this.chartData.close_data.length; i++) {
           var base = 1
@@ -95,32 +110,7 @@ export default {
       if (this.benchmark.histData != null && this.benchmark.histData.length > 0) {
         this.benchmarkNorm.histData = this.benchmark.histData.map(item => item === '' ? '' : item / this.benchmark.histData[this.start_index])
       }
-
       this.setOptions(this.chartDataNorm, this.benchmarkNorm)
-    },
-    initChart: function() {
-      this.start_index = 0
-      this.chart = echarts.init(this.$el, 'macarons')
-
-      var _this = this
-      this.chart.on('dataZoom', function(params) {
-        _this.start_index = Number(_this.chart.getModel().option.xAxis[0].rangeStart)
-        if (_this.chartData.close_data != null) {
-          for (let i = 0; i < _this.chartData.close_data.length; i++) {
-            var base = 1
-            if (_this.chartData.close_data[i][_this.start_index] !== '') {
-              base = _this.chartData.close_data[i][_this.start_index]
-            } else {
-              base = 1
-            }
-            _this.chartDataNorm.close_data[i] = _this.chartData.close_data[i].map(item => item === '' ? '' : item / base)
-          }
-        }
-        if (_this.benchmark.histData != null && _this.benchmark.histData.length > 0) {
-          _this.benchmarkNorm.histData = _this.benchmark.histData.map(item => item === '' ? '' : item / _this.benchmark.histData[_this.start_index])
-        }
-        _this.setOptions(_this.chartDataNorm, _this.benchmarkNorm)
-      })
     },
     makeGridData(chartData, benchmark) {
       var ret = []
@@ -209,10 +199,9 @@ export default {
         ],
         series: this.makeGridData(chartData, benchmark),
         formatter: function(params) {
-          const params_index = []
           if (params instanceof Array) {
-            let ret = params.length > 0 ? params[0].axisValue + '<br>' : ''
-            let sum = params.reduce((total, item) => total + item.data, 0)
+            var ret = params.length > 0 ? params[0].axisValue + '<br>' : ''
+            var sum = params.reduce((total, item) => total + item.data, 0)
             for (let i = 0; i < params.length; i++) {
               ret += params[i].marker + ' ' +
                 params[i].seriesName + ' (' +

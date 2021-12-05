@@ -218,9 +218,6 @@
           document.body.appendChild(fileLink)
           fileLink.click();
           document.body.removeChild(fileLink)
-          // Just to simulate the time of the request
-          setTimeout(() => {
-          }, 1.5 * 1000)
         })
       },
       handleDelete(index, row) {

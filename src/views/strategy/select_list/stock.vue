@@ -57,7 +57,7 @@
           </el-input>
         </el-form-item>
       </el-form>
-      <stack-line-chart ref="CombineChart" :chart-data="combineForm" :height="combineChartHeight" />
+      <stack-line-chart ref="CombineChart" :height="combineChartHeight" />
     </el-dialog>
 
     <!-- compare对话框 -->
@@ -228,8 +228,14 @@ export default {
       }
       var _this = this
       setTimeout(function() {
-        _this.$refs.CombineChart.draw()
+        _this.addBenchmarkData()
       }, 0)
+    },
+    addBenchmarkData() {
+      this.combineForm.ts_code_list.splice(1, 0, '')
+      this.combineForm.name_list.splice(1, 0, '')
+      this.combineForm.close_data.splice(1, 0, [])
+      this.$refs.CombineChart.draw(this.combineForm)
     },
     switchCompareFullscreen(fullscreen) {
       this.compareFullscreen = fullscreen
@@ -278,7 +284,7 @@ export default {
         }
 
         fetchCombineData(data, this.activeName === 'fund' ? 'unit_nav' : 'close').then(response => {
-          resolve(response)
+          resolve(response.lineChartData)
           setTimeout(() => {
           }, 1.5 * 1000)
         })

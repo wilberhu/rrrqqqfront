@@ -108,7 +108,7 @@ export default {
   },
   data() {
     return {
-      activeName: '',
+      activeName: '0',
       data: {},
       PortfolioListLoading: true,
       downloadLoading: false,
@@ -125,6 +125,7 @@ export default {
     }
   },
   created() {
+    this.activeName = '0'
     this.getList()
   },
   methods: {
@@ -140,17 +141,17 @@ export default {
     },
     handleTabClick(tab, event) {
       this.handleTabChange(tab.name)
+      this.getList()
     },
     getList() {
       this.PortfolioListLoading = true
-      // 留给页面渲染时间
-      setTimeout(() => {
+      fetchItemPortfolio(this.ts_code, { end_date: this.activeName }).then(response => {
         this.PortfolioListLoading = false
-      }, 3 * 1000)
-      fetchItemPortfolio(this.ts_code).then(response => {
         const dateList = Object.keys(response)
         this.data = Object.assign({}, response)
-        this.activeName = dateList[dateList.length - 1]
+        if (this.activeName === '0') {
+          this.activeName = dateList[dateList.length - 1]
+        }
 
         // this.PortfolioListLoading = false
         for (const date of dateList) {
@@ -181,9 +182,6 @@ export default {
         document.body.appendChild(fileLink)
         fileLink.click()
         document.body.removeChild(fileLink)
-        // Just to simulate the time of the request
-        setTimeout(() => {
-        }, 1.5 * 1000)
       })
     }
   }

@@ -254,11 +254,6 @@ export default {
         this.list = response.results
         this.total = response.count
         this.listLoading = false
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
       })
     },
     querySearchAsync(queryString, cb) {

@@ -1,6 +1,6 @@
 <template>
   <div class="tab-container">
-    <el-form ref="compositionForm" label-position="left" label-width="80px" :model="compositionForm" style="padding: 0 20px;">
+    <el-form ref="compositionForm" label-position="left" label-width="80px" :model="compositionForm">
       <el-row :gutter="8">
         <el-col :xs="{span: 24}" :sm="{span: 6}" :md="{span: 6}" :lg="{span: 6}" :xl="{span: 6}">
           <el-button style="margin: 0 10px 10px 0;" type="primary" icon="el-icon-upload" @click="handleImportJson">
@@ -9,7 +9,7 @@
           <el-button style="margin: 0 10px 10px 0;" :loading="exportJsonLoading" type="primary" icon="el-icon-document" @click="handleExportJson">
             Export Json
           </el-button>
-          <el-form-item v-if="isEdit" label="组合名称">
+          <el-form-item label="组合名称">
             <el-tooltip class="item" :content="compositionForm.description" :disabled="!compositionForm.description" placement="bottom">
               <span>{{ compositionForm.name }}</span>
             </el-tooltip>
@@ -20,7 +20,7 @@
           <el-form-item label="手续费">
             <el-input v-model="compositionForm.commission" type="number" :step="0.0001" min="0" max="0.1" placeholder="eg: 0.0005" @change="updateState()" />
           </el-form-item>
-          <div style="height: 540px; overflow: auto; border:1px solid #cccccc; border-radius:10px; padding-top: 10px;">
+          <div class="timeline-panel">
             <el-timeline :reverse="false">
               <el-timeline-item
                 v-for="(activity, activity_index) in compositionForm.activities"
@@ -28,7 +28,7 @@
                 :timestamp="activity.timestamp"
               >
                 <div v-for="(company, company_index) in activity.holdings_cur.slice(0,2)" :key="company_index">
-                  {{ company.name }}: {{ company.share }}
+                  {{ company.name }}: {{ company.share.toFixed(2) }}
                 </div>
                 <span v-if="activity.holdings_cur.length>2">
                   ......
@@ -55,9 +55,33 @@
             @click.native.prevent="saveCompositionVisible=true"
           >Save Composition</el-button>
         </el-col>
-        <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}" style="margin-bottom:30px;">
+        <el-col :xs="{span: 24}" :sm="{span: 18}" :md="{span: 18}" :lg="{span: 18}" :xl="{span: 18}">
+          <el-row class="card-panel" v-if="Object.keys(indicators).length > 0">
+            <el-col :xs="12" :sm="12" :lg="6" v-for="(indicator, key) in indicators" :key="key">
+              <div style="margin: 8px 18px;">{{ key }} : {{ indicator }}</div>
+            </el-col>
+          </el-row>
           <el-row>
-            <stack-line-chart :chart-data="lineChartData" />
+            <el-form ref="benchmarkForm" :inline="true" :model="benchmarkForm">
+              <el-form-item>
+                <el-autocomplete
+                  v-model="benchmarkForm.ts_code"
+                  :fetch-suggestions="queryIndexSearchAsync"
+                  placeholder="请输入内容"
+                  style="width: 220px;"
+                  clearable
+                  @select="handleIndexSelect($event)"
+                  @clear="handleIndexClear($event)"
+                  @input="handleIndexInput($event)"
+                >
+                  <template slot="suffix">{{ benchmarkForm.name }}</template>
+                </el-autocomplete>
+              </el-form-item>
+            </el-form>
+          </el-row>
+          <el-row>
+            <stack-line-pie-chart ref="StackLinePieChart" v-show="whichChart === 'StackLinePieChart'" />
+            <stack-line-chart ref="StackLineChart" v-show="whichChart === 'StackLineChart'"/>
           </el-row>
         </el-col>
       </el-row>
@@ -199,13 +223,13 @@
                   <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 4}" :lg="{span: 4}" :xl="{span: 4}">
                     <el-autocomplete
                       v-model="activityForm.companyOps[company_index].ts_code_temp"
-                      :fetch-suggestions="querySearchAsync"
+                      :fetch-suggestions="queryCompanySearchAsync"
                       placeholder="股票"
                       style="width: 100%;"
                       clearable
-                      @select="handleSelect($event, company_index)"
-                      @clear="handleClear($event, company_index)"
-                      @input="handleInput($event, company_index)"
+                      @select="handleCompanySelect($event, company_index)"
+                      @clear="handleCompanyClear($event, company_index)"
+                      @input="handleCompanyInput($event, company_index)"
                     >
                       <template slot="suffix">{{ activityForm.companyOps[company_index].name }}</template>
                     </el-autocomplete>
@@ -340,16 +364,16 @@
 
     <!-- 保存弹出框 -->
     <el-dialog :visible.sync="saveCompositionVisible" :title="isEdit ? 'Edit' : 'Add'" width="80vw" center>
-      <el-form ref="compositionForm" :model="compositionForm" :rules="rules" label-position="left" label-width="120px">
+      <el-form ref="composition" :model="compositionForm" :rules="rules" label-position="left" label-width="120px">
         <el-form-item label="组合名称" prop="name">
-          <el-input v-model="compositionForm.name" placeholder="请输入名称" style="width: 220px;" />
+          <el-input v-model="compositionForm.name" placeholder="请输入名称" />
         </el-form-item>
         <el-form-item label="组合介绍">
-          <el-input v-model="compositionForm.description" type="textarea" placeholder="请输入介绍" style="width: 220px;" />
+          <el-input v-model="compositionForm.description" type="textarea" placeholder="请输入介绍" />
         </el-form-item>
         <el-form-item>
           <span class="dialog-footer">
-            <el-button style="margin-top: 10px;" size="small" type="primary" @click="saveComposition('compositionForm')">Submit</el-button>
+            <el-button style="margin-top: 10px;" size="small" type="primary" @click="saveComposition()">Submit</el-button>
             <el-button size="small" @click="saveCompositionVisible=false">Cancel</el-button>
           </span>
         </el-form-item>
@@ -396,8 +420,11 @@ import { queryCompanies } from '@/api/stockBasic'
 import { calculateComposition, getCompositionInfo, fetchItem, createItem, updateItem } from '@/api/composition'
 import { getCompanyHistData } from '@/api/histData'
 import StackLineChart from './StackLineChart'
+import StackLinePieChart from './StackLinePieChart'
 import draggable from 'vuedraggable'
 import 'element-ui/lib/theme-chalk/display.css'
+import { queryIndexes } from '@/api/stockBasic'
+import { getIndexHistData } from '@/api/histData'
 
 const formatDate = function(timestamp, format = 'yyyyMMdd') {
   const date = new Date(timestamp)
@@ -466,7 +493,8 @@ export default {
   name: 'CompositionDetail',
   components: {
     StackLineChart,
-    draggable
+    draggable,
+    StackLinePieChart
   },
   filters: {
     myParseFloat: function(value) {
@@ -482,6 +510,15 @@ export default {
     isEdit: {
       type: Boolean,
       default: false
+    }
+  },
+  computed: {
+    whichChart() {
+      if (this.lineChartData.ts_code_list.length >= 10) {
+        return 'StackLinePieChart'
+      } else {
+        return 'StackLineChart'
+      }
     }
   },
   data() {
@@ -514,6 +551,14 @@ export default {
         ts_code_list: [],
         name_list: [],
         close_data: []
+      },
+      indicators: {
+      },
+      benchmarkForm: {
+        ts_code: undefined,
+        name: undefined,
+        type: 'index',
+        hist_data: []
       },
       csvDataList: [],
       csvDataListColumns: [],
@@ -558,7 +603,8 @@ export default {
         this.updateActivities()
         this.updateState()
         this.importJsonVisible = false
-      }).catch(
+      })
+      .catch(
         error => {
           msg.close()
           msg = this.$message({
@@ -681,7 +727,7 @@ export default {
       this.activityForm.companyOps.splice(company_index, 1)
       this.activityForm = this.computeActivityCur(this.activityForm)
     },
-    querySearchAsync(queryString, cb) {
+    queryCompanySearchAsync(queryString, cb) {
       queryCompanies({ q: queryString }).then(response => {
         var list = []
         for (const item of response.results) {
@@ -694,7 +740,7 @@ export default {
         cb(list)
       })
     },
-    handleSelect(event, company_index) {
+    handleCompanySelect(event, company_index) {
       this.activityForm.companyOps[company_index].ts_code_temp = event.ts_code
       this.activityForm.companyOps[company_index].ts_code = event.ts_code
       this.activityForm.companyOps[company_index].name = event.name
@@ -718,7 +764,7 @@ export default {
         }
       })
     },
-    handleClear(event, company_index) {
+    handleCompanyClear(event, company_index) {
       this.activityForm.companyOps[company_index].ts_code_temp = undefined
       this.activityForm.companyOps[company_index].ts_code = undefined
       this.activityForm.companyOps[company_index].name = undefined
@@ -727,9 +773,9 @@ export default {
       this.activityForm.companyOps[company_index].info = undefined
       this.activityForm = this.computeActivityCur(this.activityForm)
     },
-    handleInput(event, company_index) {
+    handleCompanyInput(event, company_index) {
       if (event === '') {
-        this.handleClear(event, company_index)
+        this.handleCompanyClear(event, company_index)
       }
     },
     timestampOnChange(event) {
@@ -882,9 +928,12 @@ export default {
         message: 'Update charts'
       })
       calculateComposition(this.compositionForm).then(response => {
-        this.lineChartData = Object.assign({}, response)
+        this.lineChartData = Object.assign({}, response.lineChartData)
+        this.indicators = Object.assign({}, response.indicators)
+        this.addBenchmarkData(false, true)
         msg.close()
-      }).catch(
+      })
+      .catch(
         error => {
           msg.close()
           msg = this.$message({
@@ -902,8 +951,8 @@ export default {
     setPageTitle() {
       document.title = this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Composition'}`
     },
-    saveComposition(formName) {
-      this.$refs[formName].validate((valid) => {
+    saveComposition() {
+      this.$refs['composition'].validate((valid) => {
         if (valid) {
           if (this.isEdit) {
             updateItem(this.compositionForm.id, this.compositionFormSimple(this.compositionForm))
@@ -923,8 +972,7 @@ export default {
                     message: error,
                     type: 'Error'
                   })
-                }
-              )
+                })
           } else {
             createItem(this.compositionFormSimple(this.compositionForm))
               .then(
@@ -1070,6 +1118,94 @@ export default {
           return v[j]
         }
       }))
+    },
+    addBenchmarkData(reset = false, addBenchmark = false) {
+      var list = []
+      if (reset) {
+        this.lineChartData.ts_code_list.splice(1, 1, '')
+        this.lineChartData.name_list.splice(1, 1, '')
+        this.lineChartData.close_data.splice(1, 1, [])
+      } else {
+        var i = 0
+        var j = 0
+        while (i < this.lineChartData.time_line.length) {
+          if (j >= this.benchmarkForm.hist_data.length) {
+            break
+          } else if (this.lineChartData.time_line[i] === this.benchmarkForm.hist_data[j][0]) {
+            list.push(this.benchmarkForm.hist_data[j][2])
+            i++
+            j++
+          } else if (this.lineChartData.time_line[i] < this.benchmarkForm.hist_data[j][0]) {
+            i++
+          } else {
+            list.push('')
+            j++
+          }
+        }
+        if (addBenchmark) {
+          this.benchmarkForm = {
+            ts_code: undefined,
+            name: undefined,
+            type: 'index',
+            hist_data: []
+          }
+          this.lineChartData.ts_code_list.splice(1, 0, this.benchmarkForm.ts_code)
+          this.lineChartData.name_list.splice(1, 0, this.benchmarkForm.name)
+          this.lineChartData.close_data.splice(1, 0, list)
+        } else {
+          this.lineChartData.ts_code_list.splice(1, 1, this.benchmarkForm.ts_code)
+          this.lineChartData.name_list.splice(1, 1, this.benchmarkForm.name)
+          this.lineChartData.close_data.splice(1, 1, list)
+        }
+      }
+
+      setTimeout(() => {
+        if (this.whichChart === 'StackLinePieChart') {
+          this.$refs.StackLinePieChart.draw(this.lineChartData)
+        } else if (this.whichChart === 'StackLineChart') {
+          this.$refs.StackLineChart.draw(this.lineChartData)
+        }
+      }, 0)
+    },
+    drawCharts() {
+      if (this.benchmarkForm.ts_code) {
+        if (this.benchmarkForm.type === 'index') {
+          var param = { start: this.lineChartData.time_line[0] }
+          getIndexHistData(this.benchmarkForm.ts_code, param).then(response => {
+            this.benchmarkForm.name = response.name
+            this.benchmarkForm.hist_data = response.hist_data
+            this.addBenchmarkData(false, false)
+          })
+        }
+      }
+    },
+    queryIndexSearchAsync(queryString, cb) {
+      queryIndexes({ q: queryString }).then(response => {
+        var list = []
+        for (const item of response.results) {
+          list.push({
+            value: item.ts_code + ' - ' + item.name,
+            ts_code: item.ts_code,
+            name: item.name
+          })
+        }
+        cb(list)
+      })
+    },
+    handleIndexSelect(event) {
+      this.benchmarkForm.ts_code = event.ts_code
+      this.benchmarkForm.name = event.name
+      this.drawCharts()
+    },
+    handleIndexClear(event) {
+      this.benchmarkForm.ts_code = undefined
+      this.benchmarkForm.name = undefined
+      this.addBenchmarkData(true, false)
+    },
+    handleIndexInput(event) {
+      if (event === '') {
+        this.handleIndexClear()
+      }
     }
   }
 }
@@ -1155,5 +1291,23 @@ export default {
   }
   .el-col {
     padding: 2px;
+  }
+  .card-panel {
+    cursor: pointer;
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+    color: #666;
+    box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);
+    margin: 3px;
+    border:1px solid #dddddd;
+    border-radius:6px;
+  }
+  .timeline-panel {
+    height: 540px;
+    overflow: auto;
+    border:1px solid #dddddd;
+    border-radius:10px;
+    padding-top: 10px;
   }
 </style>

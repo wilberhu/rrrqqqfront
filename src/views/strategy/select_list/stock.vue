@@ -28,7 +28,7 @@
       <div slot="title" class="header-title">
         <i class="el-icon-full-screen" style="cursor:pointer; margin-right:30px; float: right;" @click="switchCombineFullscreen(!combineFullscreen)"></i>
       </div>
-      <el-form label-width="60px">
+      <el-form label-width="80px">
         <el-form-item label="funds: " v-if="activeName==='fund'">
           <el-tag v-for="tag in multipleSelection['fund']" :key="tag.ts_code" :type="'success'" closable style="margin: 2px" @close="closeTag(tag)">{{ tag.ts_code }} {{ tag.name }}</el-tag>
         </el-form-item>

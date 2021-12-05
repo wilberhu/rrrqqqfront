@@ -67,7 +67,7 @@
                 <el-autocomplete
                   v-model="benchmarkForm.ts_code"
                   :fetch-suggestions="queryIndexSearchAsync"
-                  placeholder="请输入内容"
+                  placeholder="Benchmark"
                   style="width: 220px;"
                   clearable
                   @select="handleIndexSelect($event)"
@@ -604,16 +604,16 @@ export default {
         this.updateState()
         this.importJsonVisible = false
       })
-      .catch(
-        error => {
-          msg.close()
-          msg = this.$message({
-            showClose: true,
-            message: error,
-            type: 'Error'
-          })
-        }
-      )
+        .catch(
+          error => {
+            msg.close()
+            msg = this.$message({
+              showClose: true,
+              message: error,
+              type: 'Error'
+            })
+          }
+        )
     } else {
       this.updateActivities()
       this.updateState()
@@ -801,6 +801,7 @@ export default {
             message: '已更改日期'
           })
           this.activityForm.companyOps = []
+          this.activityForm = this.computeActivityCur(this.activityForm)
         }).catch(() => {
           this.$message({
             type: 'info',
@@ -933,16 +934,16 @@ export default {
         this.addBenchmarkData(false, true)
         msg.close()
       })
-      .catch(
-        error => {
-          msg.close()
-          msg = this.$message({
-            showClose: true,
-            message: error,
-            type: 'Error'
-          })
-        }
-      )
+        .catch(
+          error => {
+            msg.close()
+            msg = this.$message({
+              showClose: true,
+              message: error,
+              type: 'Error'
+            })
+          }
+        )
     },
     setTagsViewTitle() {
       const route = Object.assign({}, this.tempRoute, { title: this.isEdit ? `${'Edit Composition'} - ${this.compositionForm.id}` : `${'Create Composition'}` })
@@ -1067,9 +1068,9 @@ export default {
         })
       }
       return {
-        id: this.compositionForm.id,
+        id: this.compositionForm.id == null ? undefined : this.compositionForm.id,
         name: this.compositionForm.name,
-        description: this.compositionForm.description,
+        description: this.compositionForm.description == null ? undefined : this.compositionForm.description,
 
         allfund: this.compositionForm.allfund,
         commission: this.compositionForm.commission,

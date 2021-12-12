@@ -123,6 +123,8 @@ export default {
       }
     },
     setOptions(chartData) {
+      var _this = this
+      
       this.chart.setOption({
         title: {
           text: '收益曲线',
@@ -230,7 +232,7 @@ export default {
               }
             }
             let ret = chartData.time_line[params[0].dataIndex] + '<br>'
-            ret += '收益率：' + Math.round(params[params_index[0]].data * 10000 / chartData.close_data[0][0]) / 100 + '%<br>'
+            ret += '收益率：' + Math.round(params[params_index[0]].data * 10000 / chartData.close_data[0][_this.start_index]) / 100 + '%<br>'
             for (let i = 0; i < chartData.ts_code_list.length; i++) {
               if (params[params_index[i]] && params[params_index[i]].data) {
                 ret += params[params_index[i]].marker + ' ' + params[params_index[i]].seriesName +

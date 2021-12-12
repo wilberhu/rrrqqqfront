@@ -162,12 +162,12 @@ export default {
         ],
         formatter: function(params) {
           if (params instanceof Array) {
-            let ret = _this.chartData.time_line[params[0].dataIndex] + '<br>'
-            ret += '收益率：' + Math.round(params[0].data * 10000 / _this.chartData.close_data[0][0]) / 100 + '%<br>'
+            let ret = chartData.time_line[params[0].dataIndex] + '<br>'
+            ret += '收益率：' + Math.round(params[0].data * 10000 / chartData.close_data[0][_this.start_index]) / 100 + '%<br>'
             for (let i = 0; i < _this.chartData.ts_code_list.length; i++) {
               if (params[i] && params[i].data !== 0) {
                 ret += params[i].marker + ' ' + params[i].seriesName +
-                  ' ' + _this.chartData.name_list[_this.chartData.ts_code_list.indexOf(params[i].seriesName)] +
+                  ' ' + chartData.name_list[chartData.ts_code_list.indexOf(params[i].seriesName)] +
                   '（' + Math.round(params[i].data * 10000 / params[0].data) / 100 + '%）: ' + params[i].data + '<br>'
               }
             }

@@ -707,7 +707,7 @@ export default {
     confirmDestroyTimestamp() {
       this.compositionForm.activities.splice(this.deleteTimestampForm.index, 1)
       this.delVisible = false
-      this.updateActivities()
+      this.updateActivities(0, true)
       this.updateState()
     },
     addCompany(item) {
